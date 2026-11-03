@@ -11,6 +11,9 @@ import {
   Lock,
   Mail,
   User,
+  Phone,
+  Eye,
+  EyeOff,
   ArrowRight,
   Factory,
   Award,
@@ -21,35 +24,38 @@ import { VariantProps } from './VariantA';
 export function VariantD({
   fullName,
   setFullName,
+  phone,
+  setPhone,
   email,
   setEmail,
   password,
   setPassword,
-  selectedRole,
-  setSelectedRole,
+  confirmPassword,
+  setConfirmPassword,
+  showPassword,
+  setShowPassword,
   agreeTerms,
   setAgreeTerms,
   isLoading,
   errors,
   handleSubmit,
-  availableRoles,
 }: VariantProps) {
   const storyPoints = [
     {
       title: 'Lini Produksi Modern & Presisi',
-      subtitle: 'Mesin ekstrusi & moulding berteknologi tinggi',
+      subtitle: 'Mesin ekstrusi & cetak plastik teknologi mutakhir',
       image: '/images/WhatsApp Image 2026-10-23 at 15.47.56 (3).jpeg',
       badge: 'Fasilitas Pabrik',
     },
     {
-      title: 'Pengendalian Mutu & Standar K3',
-      subtitle: 'Pengujian berkala bersertifikasi ISO 9001:2015',
+      title: 'Standar K3 & Laboratorium Mutu',
+      subtitle: 'Keselamatan kerja prioritas utama dan ISO 9001:2015',
       image: '/images/WhatsApp Image 2026-10-23 at 15.47.56 (1).jpeg',
-      badge: 'Kualitas Prima',
+      badge: 'Mutu & K3',
     },
     {
       title: 'Distribusi Logistik Terpadu',
-      subtitle: 'Jaringan distribusi nasional yang terpercaya',
+      subtitle: 'Pergudangan terintegrasi dan jangkauan nasional',
       image: '/images/WhatsApp Image 2026-10-23 at 15.47.55 (2).jpeg',
       badge: 'Logistik',
     },
@@ -146,7 +152,7 @@ export function VariantD({
           </div>
 
           {/* Right Column: Dark Glass Registration Form (5 Cols) */}
-          <div className="lg:col-span-5 bg-slate-950/90 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-6">
+          <div className="lg:col-span-5 bg-slate-950/90 rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl space-y-5">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-blue-400 bg-blue-950/70 border border-blue-900/60 px-2.5 py-0.5 rounded-full">
                 Formulir Pendaftaran
@@ -155,7 +161,7 @@ export function VariantD({
                 Buat Akun Pelamar
               </h2>
               <p className="text-xs text-slate-400 mt-1">
-                Isi data diri Anda di bawah ini untuk memulai tahapan seleksi.
+                Lengkapi formulir di bawah ini untuk memulai tahapan seleksi.
               </p>
             </div>
 
@@ -176,21 +182,41 @@ export function VariantD({
                 {errors.fullName && <p className="text-xs text-red-400 mt-1">{errors.fullName}</p>}
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Email Aktif <span className="text-red-400">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="alamat.email@anda.com"
-                    className="pl-10 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
-                  />
+              {/* Grid: No WhatsApp & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    WhatsApp / HP <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="0812xxxxxxxx"
+                      className="pl-10 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
+                    />
+                  </div>
+                  {errors.phone && <p className="text-xs text-red-400 mt-1">{errors.phone}</p>}
                 </div>
-                {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
+                    Email Aktif <span className="text-red-400">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="nama@email.com"
+                      className="pl-10 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
+                    />
+                  </div>
+                  {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email}</p>}
+                </div>
               </div>
 
               <div>
@@ -200,32 +226,40 @@ export function VariantD({
                 <div className="relative">
                   <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <Input
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="Minimal 8 karakter"
-                    className="pl-10 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
+                    className="pl-10 pr-9 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white"
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
                 {errors.password && <p className="text-xs text-red-400 mt-1">{errors.password}</p>}
               </div>
 
-              {/* Position selector dropdown */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">
-                  Posisi Yang Dipilih <span className="text-red-400">*</span>
+                  Konfirmasi Kata Sandi <span className="text-red-400">*</span>
                 </label>
-                <select
-                  value={selectedRole}
-                  onChange={(e) => setSelectedRole(e.target.value)}
-                  className="w-full h-11 px-3 text-xs bg-slate-900/80 border border-slate-800 text-white rounded-xl focus:border-blue-500 focus:outline-none"
-                >
-                  {availableRoles.map((r) => (
-                    <option key={r.title} value={r.title} className="bg-slate-900 text-white">
-                      {r.title} ({r.openings} Formasi)
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type={showPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Ulangi kata sandi"
+                    className="pl-10 h-11 text-xs bg-slate-900/80 border-slate-800 text-white rounded-xl focus:border-blue-500"
+                  />
+                </div>
+                {errors.confirmPassword && (
+                  <p className="text-xs text-red-400 mt-1">{errors.confirmPassword}</p>
+                )}
               </div>
 
               <div className="pt-1">
@@ -237,7 +271,7 @@ export function VariantD({
                     className="mt-0.5 w-4 h-4 rounded text-blue-600 border-slate-700 bg-slate-900"
                   />
                   <span className="text-xs text-slate-400 leading-snug">
-                    Saya menyetujui pemrosesan data pelamar oleh CV. Asia Plastik.
+                    Saya menyetujui pemrosesan data pelamar oleh CV. Asia Plastik secara aman.
                   </span>
                 </label>
                 {errors.terms && <p className="text-xs text-red-400 mt-1">{errors.terms}</p>}
@@ -252,7 +286,7 @@ export function VariantD({
                   <span>Menyimpan Akun...</span>
                 ) : (
                   <>
-                    <span>Daftar & Lanjut Seleksi</span>
+                    <span>Daftar Akun Sekarang</span>
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}

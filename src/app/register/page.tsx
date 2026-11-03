@@ -13,23 +13,23 @@ import { VariantE } from './variants/VariantE';
 const PROTOTYPE_VARIANTS: PrototypeVariantInfo[] = [
   {
     id: 'A',
-    name: 'Corporate Split Showcase',
-    description: 'Split 50/50 dengan foto megah pabrik di sisi kiri dan form modern di kanan',
+    name: 'Corporate Split Enterprise',
+    description: 'Split 50/50: Foto megah lini pabrik & logo putih di kiri, formulir lengkap di kanan',
   },
   {
     id: 'B',
-    name: 'Floating Glass 2-Step Card',
-    description: 'Latar belakang gudang logistik penuh dengan wizard kartu melayang 2-langkah',
+    name: 'Floating Glass Centered Card',
+    description: 'Kanvas gudang logistik penuh dengan kartu kaca melayang elegan & pendaftaran cepat',
   },
   {
     id: 'C',
-    name: 'Role-Driven Catalog Grid',
-    description: 'Katalog visual posisi kerja dengan form pendaftaran terintegrasi di sampingnya',
+    name: 'Industrial Visual Highlights',
+    description: 'Tiga kartu sorotan fasilitas pabrik berdampingan dengan formulir akun kandidat',
   },
   {
     id: 'D',
-    name: 'Factory Storyboard & Editorial',
-    description: 'Tur visual 3 fasilitas pabrik nyata berdampingan dengan form pendaftaran',
+    name: 'Factory Storyboard & Editorial Dark',
+    description: 'Nuansa dark executive dengan galeri fasilitas pabrik dan form berstandar presisi',
   },
   {
     id: 'E',
@@ -46,25 +46,15 @@ function RegisterContent() {
   const variantParam = searchParams.get('variant')?.toUpperCase() || 'A';
   const currentVariant = ['A', 'B', 'C', 'D', 'E'].includes(variantParam) ? variantParam : 'A';
 
-  const roleFromUrl = searchParams.get('role');
-
   const [fullName, setFullName] = useState('Pratama Ardiansyah');
+  const [phone, setPhone] = useState('081234567890');
   const [email, setEmail] = useState('pratama.ardiansyah@gmail.com');
   const [password, setPassword] = useState('AsiaPlastik2026!');
-  const [selectedRole, setSelectedRole] = useState(
-    roleFromUrl || 'Supervisor Quality Control (QC)'
-  );
+  const [confirmPassword, setConfirmPassword] = useState('AsiaPlastik2026!');
+  const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const availableRoles = [
-    { title: 'Supervisor Quality Control (QC)', department: 'Quality Assurance & Lab Mutu', openings: 2 },
-    { title: 'Supervisor Teknik Mesin', department: 'Engineering & Maintenance', openings: 1 },
-    { title: 'Internal Auditor', department: 'Finance & Governance', openings: 1 },
-    { title: 'Admin Penjualan', department: 'Commercial & Sales B2B', openings: 2 },
-    { title: 'Lowongan Magang Nasional', department: 'People Development & Operations', openings: 5 },
-  ];
 
   const handleSelectVariant = (variantId: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -76,10 +66,12 @@ function RegisterContent() {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
-    if (!fullName.trim()) newErrors.fullName = 'Nama lengkap wajib diisi';
+    if (!fullName.trim()) newErrors.fullName = 'Nama lengkap wajib diisi sesuai KTP';
+    if (!phone.trim()) newErrors.phone = 'Nomor WhatsApp / HP aktif wajib diisi';
     if (!email.trim() || !email.includes('@')) newErrors.email = 'Alamat email aktif wajib diisi';
     if (!password || password.length < 8) newErrors.password = 'Kata sandi minimal 8 karakter';
-    if (!agreeTerms) newErrors.terms = 'Silakan setujui ketentuan pendaftaran';
+    if (password !== confirmPassword) newErrors.confirmPassword = 'Kata sandi dan konfirmasi tidak cocok';
+    if (!agreeTerms) newErrors.terms = 'Silakan setujui ketentuan privasi rekrutmen';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -89,33 +81,37 @@ function RegisterContent() {
     setErrors({});
     setIsLoading(true);
 
+    // Update candidate state in recruitment context
     updateCandidate({
       fullName,
       email,
-      appliedRole: selectedRole,
     });
 
     setTimeout(() => {
       setIsLoading(false);
+      // Navigate to profile setup in candidate dashboard
       router.push('/dashboard/profile');
-    }, 900);
+    }, 850);
   };
 
   const formProps = {
     fullName,
     setFullName,
+    phone,
+    setPhone,
     email,
     setEmail,
     password,
     setPassword,
-    selectedRole,
-    setSelectedRole,
+    confirmPassword,
+    setConfirmPassword,
+    showPassword,
+    setShowPassword,
     agreeTerms,
     setAgreeTerms,
     isLoading,
     errors,
     handleSubmit,
-    availableRoles,
   };
 
   return (
@@ -139,7 +135,13 @@ function RegisterContent() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">Memuat prototype pendaftaran...</div>}>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-slate-900 text-white">
+          Memuat prototype pendaftaran...
+        </div>
+      }
+    >
       <RegisterContent />
     </Suspense>
   );

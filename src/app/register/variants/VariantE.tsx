@@ -11,10 +11,11 @@ import {
   Lock,
   Mail,
   User,
+  Phone,
+  Eye,
+  EyeOff,
   ArrowRight,
-  Briefcase,
   Star,
-  Quote,
   Factory,
 } from 'lucide-react';
 import { VariantProps } from './VariantA';
@@ -22,18 +23,21 @@ import { VariantProps } from './VariantA';
 export function VariantE({
   fullName,
   setFullName,
+  phone,
+  setPhone,
   email,
   setEmail,
   password,
   setPassword,
-  selectedRole,
-  setSelectedRole,
+  confirmPassword,
+  setConfirmPassword,
+  showPassword,
+  setShowPassword,
   agreeTerms,
   setAgreeTerms,
   isLoading,
   errors,
   handleSubmit,
-  availableRoles,
 }: VariantProps) {
   return (
     <div className="min-h-screen bg-white font-sans flex flex-col justify-between pb-24">
@@ -77,7 +81,7 @@ export function VariantE({
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
                   Nama Lengkap (Sesuai KTP) <span className="text-red-500">*</span>
@@ -88,76 +92,92 @@ export function VariantE({
                     value={fullName}
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Contoh: Pratama Ardiansyah"
-                    className="pl-10 h-11 text-sm rounded-xl border-slate-200"
+                    className="pl-10 h-10 text-xs rounded-xl border-slate-200"
                   />
                 </div>
                 {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Alamat Email <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama.email@domain.com"
-                    className="pl-10 h-11 text-sm rounded-xl border-slate-200"
-                  />
+              {/* Grid: No WhatsApp & Email */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    No. WhatsApp / HP <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="0812xxxxxxxx"
+                      className="pl-10 h-10 text-xs rounded-xl border-slate-200"
+                    />
+                  </div>
+                  {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
                 </div>
-                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Alamat Email <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="nama@email.com"
+                      className="pl-10 h-10 text-xs rounded-xl border-slate-200"
+                    />
+                  </div>
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Kata Sandi Baru <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Minimal 8 karakter"
-                    className="pl-10 h-11 text-sm rounded-xl border-slate-200"
-                  />
+              {/* Grid: Password & Confirm */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Kata Sandi <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Minimal 8 karakter"
+                      className="pl-10 pr-9 h-10 text-xs rounded-xl border-slate-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                  {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
                 </div>
-                {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
-              </div>
 
-              {/* Role selection as selectable chips */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                  Pilih Posisi Lamaran <span className="text-red-500">*</span>
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {availableRoles.map((role) => {
-                    const isSelected = selectedRole === role.title;
-                    return (
-                      <button
-                        key={role.title}
-                        type="button"
-                        onClick={() => setSelectedRole(role.title)}
-                        className={`text-xs px-3 py-2 rounded-xl font-semibold border transition-all text-left flex items-center gap-1.5 ${
-                          isSelected
-                            ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                            : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                        }`}
-                      >
-                        <span>{role.title}</span>
-                        <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded ${
-                            isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'
-                          }`}
-                        >
-                          {role.openings}
-                        </span>
-                      </button>
-                    );
-                  })}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                    Konfirmasi Sandi <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Input
+                      type={showPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Ulangi sandi"
+                      className="pl-10 h-10 text-xs rounded-xl border-slate-200"
+                    />
+                  </div>
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>
+                  )}
                 </div>
               </div>
 
@@ -170,7 +190,7 @@ export function VariantE({
                     className="mt-1 w-4 h-4 rounded text-blue-600 border-slate-300"
                   />
                   <span className="text-xs text-slate-600 leading-relaxed">
-                    Saya menyetujui pemrosesan data pelamar oleh HRD CV. Asia Plastik.
+                    Saya menyetujui pemrosesan data pelamar oleh HRD CV. Asia Plastik secara aman.
                   </span>
                 </label>
                 {errors.terms && <p className="text-xs text-red-500 mt-1">{errors.terms}</p>}
@@ -179,7 +199,7 @@ export function VariantE({
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 text-sm flex items-center justify-center gap-2 mt-4"
+                className="w-full h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 text-xs flex items-center justify-center gap-2 mt-3"
               >
                 {isLoading ? (
                   <span>Menyiapkan Akun...</span>

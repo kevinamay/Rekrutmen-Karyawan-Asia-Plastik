@@ -6,54 +6,74 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Building2,
   ShieldCheck,
   CheckCircle2,
   Lock,
   Mail,
   User,
+  Phone,
+  Eye,
+  EyeOff,
   ArrowRight,
-  Sparkles,
-  Award,
   Factory,
+  Award,
+  Sparkles,
 } from 'lucide-react';
 
 export interface VariantProps {
   fullName: string;
   setFullName: (v: string) => void;
+  phone: string;
+  setPhone: (v: string) => void;
   email: string;
   setEmail: (v: string) => void;
   password: string;
   setPassword: (v: string) => void;
-  selectedRole: string;
-  setSelectedRole: (v: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (v: string) => void;
+  showPassword: boolean;
+  setShowPassword: (v: boolean) => void;
   agreeTerms: boolean;
   setAgreeTerms: (v: boolean) => void;
   isLoading: boolean;
   errors: Record<string, string>;
   handleSubmit: (e: React.FormEvent) => void;
-  availableRoles: { title: string; department: string; openings: number }[];
 }
 
 export function VariantA({
   fullName,
   setFullName,
+  phone,
+  setPhone,
   email,
   setEmail,
   password,
   setPassword,
-  selectedRole,
-  setSelectedRole,
+  confirmPassword,
+  setConfirmPassword,
+  showPassword,
+  setShowPassword,
   agreeTerms,
   setAgreeTerms,
   isLoading,
   errors,
   handleSubmit,
-  availableRoles,
 }: VariantProps) {
+  const getPasswordStrength = () => {
+    if (!password) return { label: '', color: 'bg-slate-200', width: '0%' };
+    if (password.length < 6) return { label: 'Lemah', color: 'bg-red-500', width: '25%' };
+    if (password.length < 8) return { label: 'Sedang', color: 'bg-amber-500', width: '60%' };
+    const hasNum = /\d/.test(password);
+    const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+    if (hasNum && hasSpecial) return { label: 'Sangat Kuat', color: 'bg-emerald-500', width: '100%' };
+    return { label: 'Kuat', color: 'bg-blue-600', width: '80%' };
+  };
+
+  const strength = getPasswordStrength();
+
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-50 font-sans pb-16 lg:pb-0">
-      {/* Left Column: Visual Factory Showcase */}
+      {/* Left Column: Factory Visual Showcase & Values */}
       <div className="w-full lg:w-5/12 bg-slate-900 relative flex flex-col justify-between p-8 sm:p-12 text-white min-h-[460px] lg:min-h-screen overflow-hidden">
         {/* Real Factory Image Background */}
         <div className="absolute inset-0 z-0">
@@ -64,11 +84,10 @@ export function VariantA({
             priority
             className="object-cover object-center scale-105 filter brightness-90"
           />
-          {/* Subtle dark gradient overlay to ensure text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-blue-950/70 to-slate-950/80" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-950/95 via-blue-950/75 to-slate-950/80" />
         </div>
 
-        {/* Top Header inside Left Panel */}
+        {/* Top Header */}
         <div className="relative z-10 flex items-center justify-between">
           <Link href="/" className="inline-block">
             <Image
@@ -89,16 +108,16 @@ export function VariantA({
         <div className="relative z-10 my-auto py-8 space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md border border-blue-400/30 text-xs font-semibold text-blue-200">
             <Factory className="w-4 h-4 text-blue-400" />
-            <span>Manufaktur Modern & Ramah Lingkungan</span>
+            <span>Industri Manufaktur Plastik & Kemasan</span>
           </div>
 
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
-            Mulai Karir Profesional Anda di{' '}
+            Buat Akun Pelamar & Bangun Karir di{' '}
             <span className="text-blue-400">CV. Asia Plastik</span>
           </h1>
 
           <p className="text-sm text-slate-200 leading-relaxed max-w-md">
-            Bergabunglah bersama fasilitas produksi berstandar internasional. Sistem seleksi transparan, evaluasi objektif, dan kesempatan berkembang nyata.
+            Daftarkan diri Anda untuk mengakses seluruh formasi lowongan kerja, mengikuti tes seleksi online, dan memantau status lamaran secara transparan.
           </p>
 
           <div className="space-y-3 pt-2">
@@ -106,19 +125,19 @@ export function VariantA({
               <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                 <CheckCircle2 className="w-4 h-4" />
               </div>
-              <span>Tracking status seleksi dan tes secara real-time</span>
+              <span>Akses ke seluruh lowongan kerja teknik, produksi & staff</span>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-200">
               <div className="w-6 h-6 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center shrink-0">
-                <Award className="w-4 h-4" />
+                <ShieldCheck className="w-4 h-4" />
               </div>
-              <span>Sertifikasi K3 & Standar Mutu ISO 9001:2015</span>
+              <span>Data pribadi pelamar aman & terlindungi secara terenkripsi</span>
             </div>
             <div className="flex items-center gap-3 text-xs text-slate-200">
               <div className="w-6 h-6 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center shrink-0">
                 <Sparkles className="w-4 h-4" />
               </div>
-              <span>Asesmen kompetensi objektif berbasis Smart AI</span>
+              <span>Simulasi AI Interview & evaluasi kompetensi objektif</span>
             </div>
           </div>
         </div>
@@ -130,24 +149,23 @@ export function VariantA({
         </div>
       </div>
 
-      {/* Right Column: Clean Registration Form */}
+      {/* Right Column: Clean, Professional Registration Form */}
       <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-12">
         <div className="max-w-xl w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-900/5 border border-slate-100 space-y-6">
-          {/* Header on form */}
           <div>
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                Registrasi Akun Pelamar
+                Registrasi Akun Baru
               </span>
               <Link href="/login" className="text-xs font-bold text-blue-600 hover:text-blue-800">
                 Sudah punya akun? Masuk →
               </Link>
             </div>
             <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-3">
-              Buat Akun Pelamar Baru
+              Pendaftaran Akun Kandidat
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Lengkapi data singkat berikut untuk memulai proses lamaran kerja.
+              Lengkapi formulir di bawah ini untuk membuat akun portal rekrutmen resmi.
             </p>
           </div>
 
@@ -155,97 +173,118 @@ export function VariantA({
             {/* Full Name */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Nama Lengkap Sesuai KTP <span className="text-red-500">*</span>
+                Nama Lengkap (Sesuai KTP) <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Contoh: Budi Santoso"
+                  placeholder="Contoh: Pratama Ardiansyah"
                   className={`pl-10 h-11 text-sm rounded-xl ${errors.fullName ? 'border-red-500' : ''}`}
                 />
               </div>
               {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
             </div>
 
-            {/* Email */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Alamat Email Aktif <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="budi.santoso@email.com"
-                  className={`pl-10 h-11 text-sm rounded-xl ${errors.email ? 'border-red-500' : ''}`}
-                />
+            {/* Grid: WhatsApp & Email */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Nomor WhatsApp / HP <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="081234567890"
+                    className={`pl-10 h-11 text-sm rounded-xl ${errors.phone ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
               </div>
-              {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Alamat Email Aktif <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nama@email.com"
+                    className={`pl-10 h-11 text-sm rounded-xl ${errors.email ? 'border-red-500' : ''}`}
+                  />
+                </div>
+                {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
+              </div>
             </div>
 
             {/* Password */}
             <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Kata Sandi Akun <span className="text-red-500">*</span>
+                </label>
+                {strength.label && (
+                  <span className="text-[11px] font-semibold text-slate-500">
+                    Kekuatan: <strong className="text-slate-800">{strength.label}</strong>
+                  </span>
+                )}
+              </div>
+              <div className="relative">
+                <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimal 8 karakter aman"
+                  className={`pl-10 pr-10 h-11 text-sm rounded-xl ${errors.password ? 'border-red-500' : ''}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {password && (
+                <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+                  <div
+                    className={`h-full ${strength.color} transition-all duration-300`}
+                    style={{ width: strength.width }}
+                  />
+                </div>
+              )}
+              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+            </div>
+
+            {/* Confirm Password */}
+            <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Kata Sandi Akun <span className="text-red-500">*</span>
+                Konfirmasi Kata Sandi <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimal 8 karakter aman"
-                  className={`pl-10 h-11 text-sm rounded-xl ${errors.password ? 'border-red-500' : ''}`}
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Ulangi kata sandi"
+                  className={`pl-10 h-11 text-sm rounded-xl ${errors.confirmPassword ? 'border-red-500' : ''}`}
                 />
               </div>
-              {errors.password && <p className="text-xs text-red-500 mt-1">{errors.password}</p>}
+              {errors.confirmPassword && (
+                <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>
+              )}
             </div>
 
-            {/* Target Role Selection */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Posisi Yang Dilamar <span className="text-red-500">*</span>
-              </label>
-              <div className="space-y-2">
-                {availableRoles.map((role) => {
-                  const isSelected = selectedRole === role.title;
-                  return (
-                    <div
-                      key={role.title}
-                      onClick={() => setSelectedRole(role.title)}
-                      className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                        isSelected
-                          ? 'border-blue-600 bg-blue-50/70 shadow-sm'
-                          : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            isSelected ? 'border-blue-600 bg-blue-600' : 'border-slate-300'
-                          }`}
-                        >
-                          {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
-                        </div>
-                        <div>
-                          <div className="text-xs sm:text-sm font-bold text-slate-900">{role.title}</div>
-                          <div className="text-[11px] text-slate-500">{role.department}</div>
-                        </div>
-                      </div>
-                      <span className="text-[11px] font-semibold text-blue-700 bg-blue-100/70 px-2 py-0.5 rounded-md">
-                        {role.openings} Formasi
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Consent Terms */}
+            {/* Terms checkbox */}
             <div className="pt-2">
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
@@ -255,23 +294,23 @@ export function VariantA({
                   className="mt-1 w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-500"
                 />
                 <span className="text-xs text-slate-600 leading-relaxed">
-                  Saya menyetujui bahwa data yang diisi adalah benar dan bersedia mengikuti prosedur seleksi rekrutmen di CV. Asia Plastik.
+                  Saya menyatakan data diri yang diberikan benar dan menyetujui ketentuan privasi seleksi rekrutmen di CV. Asia Plastik.
                 </span>
               </label>
               {errors.terms && <p className="text-xs text-red-500 mt-1">{errors.terms}</p>}
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <Button
               type="submit"
               disabled={isLoading}
               className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/25 transition-all text-sm flex items-center justify-center gap-2 mt-4"
             >
               {isLoading ? (
-                <span>Memproses Akun...</span>
+                <span>Membuat Akun Pelamar...</span>
               ) : (
                 <>
-                  <span>Daftar Sekarang & Lanjut Profil</span>
+                  <span>Daftar Sekarang & Lengkapi Profil</span>
                   <ArrowRight className="w-4 h-4" />
                 </>
               )}
