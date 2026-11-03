@@ -885,18 +885,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold">
-                  <Factory className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-lg font-black text-white tracking-tight">
-                    CV. ASIA PLASTIK
-                  </span>
-                  <p className="text-xs text-blue-400 font-medium">
-                    Corporate Recruitment & Talent Acquisition
-                  </p>
-                </div>
+              <div className="py-1">
+                <Image
+                  src="/assets/images/logos/logo-white.webp"
+                  alt="CV. Asia Plastik"
+                  width={160}
+                  height={55}
+                  className="h-10 sm:h-12 w-auto object-contain"
+                />
               </div>
               <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
                 Industri manufaktur plastik terkemuka berfokus pada produk berkualitas tinggi,
