@@ -341,18 +341,15 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-blue-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
           {/* Logo & Corporate Brand */}
-          <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20 group-hover:bg-blue-700 transition-colors">
-              <Factory className="w-6 h-6" />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-black text-blue-900 tracking-tight leading-none">
-                CV. ASIA PLASTIK
-              </span>
-              <span className="text-[11px] font-semibold text-blue-600 uppercase tracking-wider mt-1">
-                Portal Rekrutmen Resmi
-              </span>
-            </div>
+          <Link href="/" className="flex items-center group py-1">
+            <Image
+              src="/assets/images/logos/logo.webp"
+              alt="CV. Asia Plastik"
+              width={160}
+              height={55}
+              priority
+              className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+            />
           </Link>
 
           {/* Navigation Links */}
