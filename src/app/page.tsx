@@ -398,28 +398,25 @@ export default function HomePage() {
       </header>
 
       {/* ==========================================
-          1. HERO SECTION (Top)
-          Background image: /images/WhatsApp Image 2026-10-23 at 15.47.56 (3).jpeg
-          Dark blue/gradient overlay: bg-blue-900/60
+          1. HERO SECTION (Parallax Fixed Background & Overlapping Cards)
+          Background image: Fixed in place relative to viewport
+          Cards: Overlap bottom hero edge onto Section 2
       ========================================== */}
-      <section className="relative min-h-[580px] sm:min-h-[640px] flex items-center justify-center overflow-hidden bg-slate-900">
-        {/* Factory/Warehouse Interior Background Image */}
-        <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src="/images/WhatsApp Image 2026-10-23 at 15.47.56 (3).jpeg"
-            alt="Pabrik CV Asia Plastik"
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover object-center transition-transform duration-700 scale-105"
+      <section className="relative overflow-visible bg-slate-950 pt-20 sm:pt-28 pb-16 sm:pb-24">
+        {/* Parallax Fixed Background Layer */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div
+            className="absolute inset-0 bg-fixed bg-cover bg-center bg-no-repeat will-change-transform"
+            style={{
+              backgroundImage: "url('/images/WhatsApp%20Image%202026-10-23%20at%2015.47.56%20(3).jpeg')",
+            }}
           />
+          {/* Natural dark vignette overlay to preserve factory colors while ensuring text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/35 to-slate-950/85" />
         </div>
 
-        {/* Natural dark vignette overlay (tanpa filter biru pekat agar foto pabrik & warnanya tetap terlihat jelas) */}
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/35 to-slate-950/75" />
-
         {/* Hero Content */}
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white py-16 sm:py-24 space-y-6">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white space-y-6">
           {/* Corporate Trust Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-white/20 text-xs font-semibold text-white shadow-sm">
             <Building2 className="w-3.5 h-3.5 text-blue-400" />
@@ -459,28 +456,108 @@ export default function HomePage() {
               <span>Portal Masuk Pelamar</span>
             </Link>
           </div>
+        </div>
 
-          {/* Industrial Trust Badges */}
-          <div className="pt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
-            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
-              <div className="text-2xl font-black text-white">10+</div>
-              <div className="text-xs font-semibold text-blue-300">Posisi Dibuka</div>
-              <div className="text-[11px] text-slate-300">Teknik hingga Magang</div>
+        {/* Overlapping Cards Container: Bridges Hero and Section 2 */}
+        <div className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 -mb-28 sm:-mb-32 mt-14 sm:mt-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            {/* Card 1: 10+ Posisi */}
+            <a
+              href="#lowongan"
+              className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-xl shadow-slate-950/15 border border-slate-100 hover:shadow-2xl hover:border-blue-300 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between"
+            >
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm group-hover:bg-blue-600 group-hover:text-white transition-all duration-300">
+                    <Briefcase className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800">
+                    10+ Posisi
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-base text-slate-900 group-hover:text-blue-600 transition-colors">
+                  Peluang Karir Terbuka
+                </h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Teknik Mesin, QC Laboratorium, Operasional, Pajak, hingga Program Magang.
+                </p>
+              </div>
+              <div className="pt-4 mt-3 border-t border-slate-100 flex items-center text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform">
+                <span>Lihat Lowongan</span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
+            </a>
+
+            {/* Card 2: 100% Transparan */}
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-xl shadow-slate-950/15 border border-slate-100 hover:shadow-2xl hover:border-emerald-300 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-sm group-hover:bg-emerald-600 group-hover:text-white transition-all duration-300">
+                    <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800">
+                    100% Transparan
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-base text-slate-900 group-hover:text-emerald-600 transition-colors">
+                  Tracking Real-Time
+                </h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Pantau setiap tahap seleksi berkas, tes teknis, & hasil wawancara terbuka.
+                </p>
+              </div>
+              <div className="pt-4 mt-3 border-t border-slate-100 flex items-center text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform">
+                <span>Proses Adil & Akuntabel</span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
             </div>
-            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
-              <div className="text-2xl font-black text-white">100%</div>
-              <div className="text-xs font-semibold text-blue-300">Transparan</div>
-              <div className="text-[11px] text-slate-300">Tracking status seleksi</div>
+
+            {/* Card 3: Standar ISO Mutu */}
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-xl shadow-slate-950/15 border border-slate-100 hover:shadow-2xl hover:border-amber-300 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm group-hover:bg-amber-600 group-hover:text-white transition-all duration-300">
+                    <Award className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800">
+                    Standar ISO
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-base text-slate-900 group-hover:text-amber-600 transition-colors">
+                  Manufaktur Modern
+                </h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Lini produksi berstandar internasional, prioritas keselamatan K3, & SOP prima.
+                </p>
+              </div>
+              <div className="pt-4 mt-3 border-t border-slate-100 flex items-center text-xs font-bold text-amber-600 group-hover:translate-x-1 transition-transform">
+                <span>Mutu Mutakhir</span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
             </div>
-            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
-              <div className="text-2xl font-black text-white">ISO</div>
-              <div className="text-xs font-semibold text-blue-300">Standar Mutu</div>
-              <div className="text-[11px] text-slate-300">Manufaktur terstandarisasi</div>
-            </div>
-            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
-              <div className="text-2xl font-black text-white">AI</div>
-              <div className="text-xs font-semibold text-blue-300">Smart Assessment</div>
-              <div className="text-[11px] text-slate-300">Evaluasi objektif & cepat</div>
+
+            {/* Card 4: AI Smart Assessment */}
+            <div className="bg-white/95 backdrop-blur-md rounded-2xl p-5 sm:p-6 shadow-xl shadow-slate-950/15 border border-slate-100 hover:shadow-2xl hover:border-purple-300 hover:-translate-y-2 transition-all duration-300 group flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shadow-sm group-hover:bg-purple-600 group-hover:text-white transition-all duration-300">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <span className="inline-flex items-center text-xs font-bold px-2.5 py-1 rounded-full bg-purple-100 text-purple-800">
+                    Smart AI
+                  </span>
+                </div>
+                <h3 className="font-extrabold text-base text-slate-900 group-hover:text-purple-600 transition-colors">
+                  Evaluasi Objektif
+                </h3>
+                <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                  Simulasi AI Interview, psikotes terpadu, dan uji kompetensi yang akurat dan adil.
+                </p>
+              </div>
+              <div className="pt-4 mt-3 border-t border-slate-100 flex items-center text-xs font-bold text-purple-600 group-hover:translate-x-1 transition-transform">
+                <span>Sistem AI Modern</span>
+                <ChevronRight className="w-4 h-4 ml-1" />
+              </div>
             </div>
           </div>
         </div>
@@ -489,11 +566,11 @@ export default function HomePage() {
       {/* ==========================================
           2. OPEN VACANCIES SECTION (Job Board)
           Section background: bg-blue-50/50
-          Grid: 1 col mobile, 2 col tablet, 3 col desktop
+          Clearance top padding for overlapping cards: pt-36 sm:pt-44
       ========================================== */}
       <section
         id="lowongan"
-        className="py-16 sm:py-24 bg-blue-50/50 border-y border-blue-100/80 scroll-mt-20"
+        className="pt-36 sm:pt-44 pb-16 sm:py-24 bg-blue-50/50 border-y border-blue-100/80 scroll-mt-20"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* Section Header */}
