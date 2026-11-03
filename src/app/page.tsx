@@ -758,7 +758,7 @@ export default function HomePage() {
 
             <div className="bg-white p-6 rounded-2xl border border-blue-100 shadow-sm space-y-3 relative">
               <span className="text-3xl font-black text-blue-600/30 absolute right-6 top-6">04</span>
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+              <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
                 4
               </div>
               <h4 className="font-bold text-base text-blue-900">Offering & Onboarding</h4>
