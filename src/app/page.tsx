@@ -312,6 +312,22 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeJobModal, setActiveJobModal] = useState<JobOpening | null>(null);
+  const [scrollY, setScrollY] = useState(0);
+
+  React.useEffect(() => {
+    let ticking = false;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrollY(window.scrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const categories = [
     'Semua',
@@ -398,22 +414,29 @@ export default function HomePage() {
       </header>
 
       {/* ==========================================
-          1. HERO SECTION (Parallax Fixed Background & Overlapping Cards)
-          Background image: Fixed in place relative to viewport
+          FIXED HERO BACKGROUND (True Viewport-Fixed Parallax)
+          Tetap diam di tempat (fixed) di layar saat halaman di-scroll
+      ========================================== */}
+      <div
+        className={`fixed inset-0 pointer-events-none transition-opacity duration-300 z-0 ${
+          scrollY > 950 ? 'opacity-0 invisible' : 'opacity-100 visible'
+        }`}
+        style={{
+          backgroundImage: "url('/images/WhatsApp%20Image%202026-10-23%20at%2015.47.56%20(3).jpeg')",
+          backgroundPosition: 'center',
+          backgroundSize: 'cover',
+          backgroundRepeat: 'no-repeat',
+        }}
+      >
+        {/* Natural dark vignette overlay to preserve factory colors while ensuring text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/35 to-slate-950/85" />
+      </div>
+
+      {/* ==========================================
+          1. HERO SECTION (Overlapping Cards on Transparent Canvas)
           Cards: Overlap bottom hero edge onto Section 2
       ========================================== */}
-      <section className="relative overflow-visible bg-slate-950 pt-20 sm:pt-28 pb-16 sm:pb-24">
-        {/* Parallax Fixed Background Layer */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div
-            className="absolute inset-0 bg-fixed bg-cover bg-center bg-no-repeat will-change-transform"
-            style={{
-              backgroundImage: "url('/images/WhatsApp%20Image%202026-10-23%20at%2015.47.56%20(3).jpeg')",
-            }}
-          />
-          {/* Natural dark vignette overlay to preserve factory colors while ensuring text readability */}
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/35 to-slate-950/85" />
-        </div>
+      <section className="relative z-10 overflow-visible bg-transparent pt-20 sm:pt-28 pb-16 sm:pb-24">
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white space-y-6">
@@ -565,12 +588,12 @@ export default function HomePage() {
 
       {/* ==========================================
           2. OPEN VACANCIES SECTION (Job Board)
-          Section background: bg-blue-50/50
+          Solid opaque curtain sliding over the fixed hero
           Clearance top padding for overlapping cards: pt-36 sm:pt-44
       ========================================== */}
       <section
         id="lowongan"
-        className="pt-36 sm:pt-44 pb-16 sm:py-24 bg-blue-50/50 border-y border-blue-100/80 scroll-mt-20"
+        className="relative z-10 pt-36 sm:pt-44 pb-16 sm:py-24 bg-[#f8fafc] border-y border-blue-100/80 scroll-mt-20 shadow-[0_-25px_50px_rgba(15,23,42,0.25)]"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           {/* Section Header */}
@@ -683,7 +706,7 @@ export default function HomePage() {
       {/* ==========================================
           COMPANY VALUE & WORKFLOW OVERVIEW
       ========================================== */}
-      <section id="tentang" className="py-16 sm:py-20 bg-white">
+      <section id="tentang" className="relative z-10 py-16 sm:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-6">
@@ -790,7 +813,7 @@ export default function HomePage() {
       {/* ==========================================
           TAHAPAN SELEKSI REKRUTMEN
       ========================================== */}
-      <section id="tahapan" className="py-16 sm:py-20 bg-blue-50/40 border-t border-blue-100">
+      <section id="tahapan" className="relative z-10 py-16 sm:py-20 bg-[#eff6ff] border-t border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
           <div className="text-center max-w-2xl mx-auto space-y-3">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-100 border border-blue-200">
@@ -958,7 +981,7 @@ export default function HomePage() {
       {/* ==========================================
           FOOTER
       ========================================== */}
-      <footer id="kontak" className="mt-auto bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
+      <footer id="kontak" className="relative z-10 mt-auto bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="md:col-span-2 space-y-4">
