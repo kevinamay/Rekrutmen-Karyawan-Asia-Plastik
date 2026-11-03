@@ -16,7 +16,6 @@ import {
   Eye,
   EyeOff,
   ArrowRight,
-  Factory,
   Sparkles,
 } from 'lucide-react';
 import { useRecruitment } from '@/context/RecruitmentContext';
@@ -94,7 +93,7 @@ export default function RegisterPage() {
         </div>
 
         {/* Top Header */}
-        <div className="relative z-10 flex items-center justify-between">
+        <div className="relative z-10">
           <Link href="/" className="inline-block">
             <Image
               src="/assets/images/logos/logo-white.webp"
@@ -105,26 +104,14 @@ export default function RegisterPage() {
               className="h-10 w-auto object-contain"
             />
           </Link>
-          <span className="text-[11px] font-bold px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-blue-200">
-            Portal Rekrutmen Resmi
-          </span>
         </div>
 
         {/* Center Copy & Value Props */}
         <div className="relative z-10 my-auto py-8 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/20 backdrop-blur-md border border-blue-400/30 text-xs font-semibold text-blue-200">
-            <Factory className="w-4 h-4 text-blue-400" />
-            <span>Industri Manufaktur Plastik & Kemasan</span>
-          </div>
-
           <h1 className="text-3xl sm:text-4xl font-black tracking-tight leading-tight">
             Buat Akun Pelamar & Bangun Karir di{' '}
             <span className="text-blue-400">CV. Asia Plastik</span>
           </h1>
-
-          <p className="text-sm text-slate-200 leading-relaxed max-w-md">
-            Daftarkan diri Anda untuk mengakses seluruh formasi lowongan kerja, mengikuti tes seleksi online, dan memantau status lamaran secara transparan.
-          </p>
 
           <div className="space-y-3 pt-2">
             <div className="flex items-center gap-3 text-xs text-slate-200">
@@ -159,17 +146,14 @@ export default function RegisterPage() {
       <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-12">
         <div className="max-w-xl w-full bg-white rounded-3xl p-8 sm:p-10 shadow-xl shadow-slate-900/5 border border-slate-100 space-y-6">
           <div>
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-                Registrasi Akun Baru
-              </span>
-              <Link href="/login" className="text-xs font-bold text-blue-600 hover:text-blue-800">
+            <div className="flex items-center justify-between gap-4">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                Pendaftaran Akun Kandidat
+              </h2>
+              <Link href="/login" className="text-xs font-bold text-blue-600 hover:text-blue-800 shrink-0 whitespace-nowrap">
                 Sudah punya akun? Masuk →
               </Link>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-3">
-              Pendaftaran Akun Kandidat
-            </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
               Lengkapi formulir di bawah ini untuk membuat akun portal rekrutmen resmi.
             </p>
