@@ -15,9 +15,9 @@ const geistMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "NexaRecruit AI | Automated Corporate Recruitment Portal",
+  title: "CV. Asia Plastik | Portal Rekrutmen Karyawan",
   description:
-    "End-to-end automated corporate recruitment web application featuring AI CV screening, competency assessment, AI HR interview, and final decision dashboard.",
+    "Portal Rekrutmen Resmi CV. Asia Plastik. Peluang karir di industri manufaktur plastik terkemuka dengan sistem seleksi modern dan transparan.",
 };
 
 export default function RootLayout({
@@ -26,9 +26,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="h-full bg-slate-50">
+    <html lang="id" className="h-full bg-slate-50 scroll-smooth">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-full font-sans antialiased text-corporate-900 bg-[#fafbfe]`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-full font-sans antialiased text-slate-800 bg-white`}
       >
         <RecruitmentProvider>{children}</RecruitmentProvider>
       </body>
