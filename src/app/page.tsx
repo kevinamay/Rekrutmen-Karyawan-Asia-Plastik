@@ -418,30 +418,27 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Dark Blue & Gradient Overlay to guarantee high text contrast */}
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-blue-900/75 to-slate-950/85 backdrop-blur-[1px]" />
-
-        {/* Subtle decorative radial light */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
+        {/* Natural dark vignette overlay (tanpa filter biru pekat agar foto pabrik & warnanya tetap terlihat jelas) */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/35 to-slate-950/75" />
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-white py-16 sm:py-24 space-y-6">
           {/* Corporate Trust Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-xs font-semibold text-blue-100 shadow-sm">
-            <Building2 className="w-3.5 h-3.5 text-blue-300" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-white/20 text-xs font-semibold text-white shadow-sm">
+            <Building2 className="w-3.5 h-3.5 text-blue-400" />
             <span>Industri Manufaktur Plastik & Kemasan Berkualitas Tinggi</span>
           </div>
 
           {/* Bold, Professional Headline */}
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-white">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-[1.15] text-white drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
             Bergabunglah Bersama Tim Kami{' '}
-            <span className="block text-blue-300 font-extrabold mt-1 text-3xl sm:text-5xl">
+            <span className="block text-blue-400 font-extrabold mt-1 text-3xl sm:text-5xl drop-shadow-[0_2px_10px_rgba(0,0,0,0.6)]">
               Bangun Karir di CV. Asia Plastik
             </span>
           </h1>
 
           {/* Supporting Copy */}
-          <p className="text-base sm:text-lg text-blue-100/90 max-w-2xl mx-auto leading-relaxed font-normal">
+          <p className="text-base sm:text-lg text-slate-100 max-w-2xl mx-auto leading-relaxed font-normal drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
             Kami mengundang para profesional berpengalaman dan talenta muda berbakat
             untuk berinovasi bersama lini manufaktur modern, berintegritas, serta
             berorientasi pada keunggulan mutu nasional.
@@ -451,7 +448,7 @@ export default function HomePage() {
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="#lowongan"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-lg shadow-blue-900/40 hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-base shadow-lg shadow-black/40 hover:shadow-xl transition-all transform hover:-translate-y-0.5"
             >
               <Briefcase className="w-5 h-5" />
               <span>Lihat Lowongan</span>
@@ -460,7 +457,7 @@ export default function HomePage() {
 
             <Link
               href="/login"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-semibold text-base border border-white/25 backdrop-blur-sm transition-all"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-slate-900/60 hover:bg-slate-900/80 text-white font-semibold text-base border border-white/25 backdrop-blur-sm transition-all shadow-md shadow-black/20"
             >
               <span>Portal Masuk Pelamar</span>
             </Link>
@@ -468,25 +465,25 @@ export default function HomePage() {
 
           {/* Industrial Trust Badges */}
           <div className="pt-10 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto text-left">
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl">
+            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
               <div className="text-2xl font-black text-white">10+</div>
-              <div className="text-xs font-semibold text-blue-200">Posisi Dibuka</div>
-              <div className="text-[11px] text-blue-100/70">Teknik hingga Magang</div>
+              <div className="text-xs font-semibold text-blue-300">Posisi Dibuka</div>
+              <div className="text-[11px] text-slate-300">Teknik hingga Magang</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl">
+            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
               <div className="text-2xl font-black text-white">100%</div>
-              <div className="text-xs font-semibold text-blue-200">Transparan</div>
-              <div className="text-[11px] text-blue-100/70">Tracking status seleksi</div>
+              <div className="text-xs font-semibold text-blue-300">Transparan</div>
+              <div className="text-[11px] text-slate-300">Tracking status seleksi</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl">
+            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
               <div className="text-2xl font-black text-white">ISO</div>
-              <div className="text-xs font-semibold text-blue-200">Standar Mutu</div>
-              <div className="text-[11px] text-blue-100/70">Manufaktur terstandarisasi</div>
+              <div className="text-xs font-semibold text-blue-300">Standar Mutu</div>
+              <div className="text-[11px] text-slate-300">Manufaktur terstandarisasi</div>
             </div>
-            <div className="bg-white/10 backdrop-blur-md border border-white/15 p-4 rounded-xl">
+            <div className="bg-slate-950/50 backdrop-blur-md border border-white/15 p-4 rounded-xl shadow-lg">
               <div className="text-2xl font-black text-white">AI</div>
-              <div className="text-xs font-semibold text-blue-200">Smart Assessment</div>
-              <div className="text-[11px] text-blue-100/70">Evaluasi objektif & cepat</div>
+              <div className="text-xs font-semibold text-blue-300">Smart Assessment</div>
+              <div className="text-[11px] text-slate-300">Evaluasi objektif & cepat</div>
             </div>
           </div>
         </div>
