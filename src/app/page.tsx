@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Briefcase,
   MapPin,
@@ -401,15 +402,21 @@ export default function HomePage() {
 
       {/* ==========================================
           1. HERO SECTION (Top)
-          Background image: /images/factory-bg.jpg
+          Background image: /images/WhatsApp Image 2026-10-23 at 15.47.56 (3).jpeg
           Dark blue/gradient overlay: bg-blue-900/60
       ========================================== */}
       <section className="relative min-h-[580px] sm:min-h-[640px] flex items-center justify-center overflow-hidden bg-slate-900">
         {/* Factory/Warehouse Interior Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-700 scale-105"
-          style={{ backgroundImage: "url('/images/factory-bg.jpg')" }}
-        />
+        <div className="absolute inset-0 overflow-hidden">
+          <Image
+            src="/images/WhatsApp Image 2026-10-23 at 15.47.56 (3).jpeg"
+            alt="Pabrik CV Asia Plastik"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center transition-transform duration-700 scale-105"
+          />
+        </div>
 
         {/* Dark Blue & Gradient Overlay to guarantee high text contrast */}
         <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-blue-900/75 to-slate-950/85 backdrop-blur-[1px]" />
