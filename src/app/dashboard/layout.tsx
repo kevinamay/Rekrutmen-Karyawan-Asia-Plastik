@@ -14,8 +14,12 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // If on main dashboard or profile page, render full screen without the old pink template wrapper
-  if (pathname === '/dashboard' || pathname === '/dashboard/profile') {
+  // Bypass legacy layout for dashboard, profile, and screening pages
+  if (
+    pathname === '/dashboard' ||
+    pathname === '/dashboard/profile' ||
+    pathname === '/dashboard/screening'
+  ) {
     return <>{children}</>;
   }
 

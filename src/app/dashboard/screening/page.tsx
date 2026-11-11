@@ -1,393 +1,572 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useRecruitment } from '@/context/RecruitmentContext';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import {
-  UploadCloud,
+  LayoutDashboard,
+  User,
   FileText,
-  Sparkles,
-  CheckCircle2,
-  AlertTriangle,
-  ArrowRight,
-  RefreshCw,
-  Search,
-  Check,
-  XCircle,
+  ClipboardCheck,
+  Clock,
+  LogOut,
+  Phone,
+  Menu,
+  X,
+  ArrowLeft,
+  UploadCloud,
   FileCheck2,
-  Cpu,
-  Layers,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Trash2,
   ShieldCheck,
+  Save,
+  Sparkles,
 } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useRecruitment } from '@/context/RecruitmentContext';
 
 export default function CVScreeningPage() {
   const router = useRouter();
-  const {
-    cvResult,
-    isAnalyzingCV,
-    cvUploadProgress,
-    triggerCVAnalysis,
-    setCVOutcome,
-  } = useRecruitment();
+  const { candidate, updateCandidate } = useRecruitment();
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dragActive, setDragActive] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<string>(cvResult.fileName);
+  const [submittedNotice, setSubmittedNotice] = useState(false);
+  const [candidateUid, setCandidateUid] = useState<string | null>(null);
+
+  const [candidateName, setCandidateName] = useState(
+    candidate.fullName || 'Kevina Maydiva Heriansaputri'
+  );
+  const [candidateEmail, setCandidateEmail] = useState(
+    candidate.email || 'kevinamay23@gmail.com'
+  );
+
+  const [docList, setDocList] = useState([
+    {
+      id: 'cv',
+      name: 'Curriculum Vitae (CV) Pelamar',
+      type: 'Wajib',
+      fileName: 'CV_Kevina_Maydiva_QC_Supervisor.pdf',
+      size: '1.24 MB',
+      verified: true,
+      updatedAt: '11 Feb 2027',
+    },
+    {
+      id: 'ktp',
+      name: 'Scan e-KTP Asli',
+      type: 'Wajib',
+      fileName: 'KTP_Kevina_Maydiva.jpg',
+      size: '840 KB',
+      verified: true,
+      updatedAt: '11 Feb 2027',
+    },
+    {
+      id: 'ijazah',
+      name: 'Scan Ijazah & Transkrip S1 ITS',
+      type: 'Wajib',
+      fileName: 'Ijazah_S1_ITS_Kevina.pdf',
+      size: '2.40 MB',
+      verified: true,
+      updatedAt: '11 Feb 2027',
+    },
+    {
+      id: 'foto',
+      name: 'Pas Foto Formal 4x6 (Latar Merah)',
+      type: 'Wajib',
+      fileName: 'Pas_Foto_4x6_Kevina.png',
+      size: '650 KB',
+      verified: true,
+      updatedAt: '11 Feb 2027',
+    },
+    {
+      id: 'skck',
+      name: 'Surat Catatan Kepolisian (SKCK)',
+      type: 'Wajib',
+      fileName: null,
+      size: null,
+      verified: false,
+      updatedAt: '-',
+    },
+    {
+      id: 'k3',
+      name: 'Sertifikat K3 Umum Kemnaker',
+      type: 'Opsional',
+      fileName: 'Sertifikat_K3_Umum_Kemnaker.pdf',
+      size: '1.80 MB',
+      verified: true,
+      updatedAt: '11 Feb 2027',
+    },
+  ]);
+
+  // Sync with Firebase Auth and Firestore
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        setCandidateUid(user.uid);
+        if (user.displayName) setCandidateName(user.displayName);
+        if (user.email) setCandidateEmail(user.email);
+
+        try {
+          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.fullName) setCandidateName(data.fullName);
+            if (data.email) setCandidateEmail(data.email);
+            if (data.uploadedDocs) {
+              setDocList(data.uploadedDocs);
+            }
+            updateCandidate({
+              fullName: data.fullName || user.displayName || candidateName,
+              email: data.email || user.email || candidateEmail,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching candidate doc in screening:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [candidateEmail, candidateName, updateCandidate]);
 
   const handleDrag = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
-      setDragActive(true);
-    } else if (e.type === 'dragleave') {
-      setDragActive(false);
-    }
+    if (e.type === 'dragenter' || e.type === 'dragover') setDragActive(true);
+    else if (e.type === 'dragleave') setDragActive(false);
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
 
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const file = e.dataTransfer.files[0];
-      setSelectedFile(file.name);
-      triggerCVAnalysis(true);
+    const updated = docList.map((d) =>
+      d.id === 'skck'
+        ? {
+            ...d,
+            fileName: 'SKCK_Polres_Sidoarjo_Kevina.pdf',
+            size: '1.15 MB',
+            verified: true,
+            updatedAt: 'Baru saja',
+          }
+        : d
+    );
+    setDocList(updated);
+
+    if (candidateUid) {
+      try {
+        await setDoc(
+          doc(db, 'candidates', candidateUid),
+          { uploadedDocs: updated, updatedAt: serverTimestamp() },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error updating docs to Firestore:', err);
+      }
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0].name);
-      triggerCVAnalysis(true);
+  const handleRowUpload = async (id: string) => {
+    const updated = docList.map((d) =>
+      d.id === id
+        ? {
+            ...d,
+            fileName: `${d.id.toUpperCase()}_Pelamar_Terverifikasi.pdf`,
+            size: '1.20 MB',
+            verified: true,
+            updatedAt: 'Baru saja',
+          }
+        : d
+    );
+    setDocList(updated);
+
+    if (candidateUid) {
+      try {
+        await setDoc(
+          doc(db, 'candidates', candidateUid),
+          { uploadedDocs: updated, updatedAt: serverTimestamp() },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error updating docs to Firestore:', err);
+      }
     }
   };
+
+  const handleRowDelete = async (id: string) => {
+    const updated = docList.map((d) =>
+      d.id === id
+        ? {
+            ...d,
+            fileName: null,
+            size: null,
+            verified: false,
+            updatedAt: '-',
+          }
+        : d
+    );
+    setDocList(updated);
+
+    if (candidateUid) {
+      try {
+        await setDoc(
+          doc(db, 'candidates', candidateUid),
+          { uploadedDocs: updated, updatedAt: serverTimestamp() },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error deleting doc in Firestore:', err);
+      }
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (candidateUid) {
+      try {
+        await setDoc(
+          doc(db, 'candidates', candidateUid),
+          {
+            uploadedDocs: docList,
+            docsSubmittedToHRD: true,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.error('Error submitting docs to HRD in Firestore:', err);
+      }
+    }
+    setSubmittedNotice(true);
+    setTimeout(() => setSubmittedNotice(false), 5000);
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const uploadedCount = docList.filter((d) => d.verified).length;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Page Title & Breadcrumb */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-corporate-200/80">
+    <div className="min-h-screen flex bg-slate-100/70 font-sans text-slate-800">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Left Sleek Navy Sidebar (Consistent with Desain 2) */}
+      <aside
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800 transition-transform duration-300 md:translate-x-0 ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } h-screen`}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <Badge variant="blush">Stage 3 of 7</Badge>
-            <span className="text-xs text-corporate-400 font-medium">• Automated CV Screening</span>
+          {/* Brand header */}
+          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            <div>
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src="/assets/images/logos/logo.webp"
+                  alt="CV. Asia Plastik"
+                  width={130}
+                  height={42}
+                  priority
+                  className="h-8 w-auto object-contain brightness-0 invert"
+                />
+              </Link>
+              <p className="text-[10px] text-sky-400 font-semibold tracking-wider uppercase mt-2">
+                Portal Karir Karyawan
+              </p>
+            </div>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-corporate-900 tracking-tight mt-1">
-            AI Resume & Skill Matrix Analysis
-          </h1>
-          <p className="text-xs sm:text-sm text-corporate-500 mt-0.5">
-            Our neural parser extracts verified technical competencies and benchmarks them against the Lead Frontend Architect criteria.
-          </p>
+
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Beranda Pelamar</span>
+            </Link>
+
+            <Link
+              href="/dashboard/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span>Biodata Diri</span>
+            </Link>
+
+            <Link
+              href="/dashboard/screening"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white shadow-sm"
+            >
+              <FileText className="w-4 h-4 text-sky-200" />
+              <span>Berkas & CV</span>
+            </Link>
+
+            <Link
+              href="/dashboard/competency-test"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              <span>Tes Kompetensi</span>
+            </Link>
+
+            <Link
+              href="/dashboard/status"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <Clock className="w-4 h-4" />
+              <span>Status Lamaran</span>
+            </Link>
+          </nav>
         </div>
 
-        {/* Quick Mock Scenarios Switcher */}
-        <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-corporate-200/80 shadow-xs">
+        {/* Sidebar Footer User Info */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              {candidateName ? candidateName.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold text-white block truncate">{candidateName}</span>
+              <span className="text-[10px] text-slate-400 block truncate">{candidateEmail}</span>
+            </div>
+          </div>
+
           <button
-            onClick={() => {
-              setSelectedFile('Sarah_Jenkins_Staff_Frontend_Resume.pdf');
-              setCVOutcome('passed');
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              cvResult.status === 'passed' && !isAnalyzingCV
-                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-xs'
-                : 'text-corporate-500 hover:text-corporate-800'
-            }`}
+            onClick={handleSignOut}
+            className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
           >
-            Mock Passed
-          </button>
-          <button
-            onClick={() => {
-              setSelectedFile('Candidate_Junior_Draft_CV.pdf');
-              setCVOutcome('disqualified');
-            }}
-            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-              cvResult.status === 'disqualified' && !isAnalyzingCV
-                ? 'bg-rose-50 text-rose-800 border border-rose-200 shadow-xs'
-                : 'text-corporate-500 hover:text-corporate-800'
-            }`}
-          >
-            Mock Disqualified
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Akun</span>
           </button>
         </div>
-      </div>
+      </aside>
 
-      {/* Upload Zone Card */}
-      <Card>
-        <CardContent className="p-6">
+      {/* Main Workspace Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Navbar */}
+        <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 text-xs">
+              <Link href="/dashboard" className="text-slate-400 hover:text-sky-600 flex items-center gap-1">
+                <ArrowLeft className="w-3 h-3" />
+                <span className="hidden sm:inline">Kembali</span>
+              </Link>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-500 hidden sm:inline">Portal Rekrutmen</span>
+              <span className="text-slate-300 hidden sm:inline">/</span>
+              <span className="font-bold text-slate-900">Unggah Berkas & CV</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <span className="text-xs bg-sky-50 text-sky-800 font-semibold px-2.5 py-1 rounded-full border border-sky-200 hidden sm:inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+              <span>Tahap 3: Verifikasi Berkas Lamaran</span>
+            </span>
+            <a
+              href="https://wa.me/6282244109503"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Bantuan HRD</span>
+              <span className="sm:hidden">HRD</span>
+            </a>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto space-y-6">
+          {/* Header */}
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                  Industrial Document Vault
+                </span>
+                <span className="text-xs text-slate-400 font-medium">• Pusat Arsip Berkas CV. Asia Plastik</span>
+              </div>
+              <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-1">
+                Pusat Pengunggahan & Verifikasi Berkas
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Kelola dan periksa seluruh status dokumen pendaftaran karyawan dalam satu tabel operasional.
+              </p>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition-all shrink-0 self-start sm:self-center"
+            >
+              <Save className="w-4 h-4" />
+              <span>Kirim Berkas ke HRD</span>
+            </button>
+          </div>
+
+          {/* Success Notification */}
+          {submittedNotice && (
+            <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in shadow-sm">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>Dokumen berkas berhasil tersimpan dan siap diproses oleh Departemen HRD Pabrik Sidoarjo.</span>
+            </div>
+          )}
+
+          {/* Central Unified Dropzone */}
           <div
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
-            className={`relative rounded-2xl border-2 border-dashed p-8 text-center transition-all ${
+            className={`border-2 border-dashed rounded-3xl p-8 text-center transition-all ${
               dragActive
-                ? 'border-blush-500 bg-blush-50/80 scale-[1.01]'
-                : 'border-corporate-200 hover:border-blush-300 bg-corporate-50/40'
+                ? 'border-sky-500 bg-sky-50/70 scale-[1.01]'
+                : 'border-slate-300 hover:border-sky-400 bg-white shadow-sm'
             }`}
           >
-            <input
-              type="file"
-              id="cv-upload-input"
-              accept=".pdf,.docx,.doc"
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
+            <div className="w-14 h-14 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center mx-auto mb-3 shadow-inner">
+              <UploadCloud className="w-7 h-7" />
+            </div>
+            <h3 className="font-extrabold text-base text-slate-900">
+              Tarik & Lepaskan File Berkas Anda di Sini
+            </h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+              Mendukung format PDF, JPG, PNG, atau DOCX (Maksimal 10 MB per berkas). Sistem akan otomatis memetakan ke dokumen terkait.
+            </p>
 
-            <div className="flex flex-col items-center justify-center space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blush-100 to-pastel-blush text-blush-600 flex items-center justify-center shadow-sm">
-                <UploadCloud className="w-7 h-7" />
-              </div>
-
-              <div>
-                <h3 className="text-base font-bold text-corporate-900">
-                  Drag and drop your candidate CV here
-                </h3>
-                <p className="text-xs text-corporate-500 mt-1 max-w-sm mx-auto">
-                  Supports PDF or DOCX formats (up to 10MB). Text layers are instantly vectorized by our AI model.
-                </p>
-              </div>
-
-              <div className="flex items-center gap-2 pt-1">
-                <label
-                  htmlFor="cv-upload-input"
-                  className="cursor-pointer inline-flex items-center justify-center rounded-xl font-medium text-xs h-9 px-4 bg-blush-600 hover:bg-blush-700 text-white shadow-blush shadow-xs transition-colors"
-                >
-                  Browse Document
-                </label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => triggerCVAnalysis(true)}
-                  className="text-xs gap-1.5"
-                >
-                  <RefreshCw className="w-3.5 h-3.5 text-corporate-500" />
-                  Re-run Analysis
-                </Button>
-              </div>
+            <div className="pt-4 flex items-center justify-center gap-3">
+              <label className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs cursor-pointer shadow-md shadow-sky-600/20 transition-all">
+                <span>Pilih File Dari Komputer</span>
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={() => handleRowUpload('skck')}
+                />
+              </label>
             </div>
           </div>
-        </CardContent>
-      </Card>
 
-      {/* Simulated Processing State with Skeleton Loaders & Scanner */}
-      {isAnalyzingCV && (
-        <Card className="border-blush-200 bg-gradient-to-b from-white to-blush-50/20 overflow-hidden">
-          <CardContent className="p-6 sm:p-8 space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-blush-100 text-blush-600 flex items-center justify-center animate-spin">
-                  <RefreshCw className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-corporate-900 flex items-center gap-2">
-                    Neural Engine Analyzing CV Document
-                    <span className="flex h-2 w-2 relative">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blush-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-blush-500" />
-                    </span>
-                  </h3>
-                  <p className="text-xs text-corporate-500 mt-0.5">
-                    Analyzing file: <span className="font-semibold text-corporate-800">{selectedFile}</span>
-                  </p>
-                </div>
-              </div>
-              <Badge variant="blush" className="animate-pulse">
-                Processing {cvUploadProgress}%
-              </Badge>
-            </div>
-
-            {/* Simulated Animated Scanner Box */}
-            <div className="relative h-28 rounded-xl bg-corporate-900/5 border border-corporate-200 overflow-hidden flex flex-col justify-center items-center">
-              <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-blush-500 to-transparent animate-scan shadow-[0_0_15px_rgba(230,53,115,0.8)]" />
-              <div className="flex flex-col items-center gap-1.5 text-xs text-corporate-600 font-medium z-10">
-                <Cpu className="w-5 h-5 text-blush-500" />
-                <span>Extracting Abstract Syntax Tree & Semantic Embedding Matrix...</span>
-              </div>
-            </div>
-
-            {/* Skeleton Loaders */}
-            <div className="space-y-3 pt-2">
-              <div className="h-4 bg-corporate-200/60 rounded-md w-3/4 animate-pulse" />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="h-10 bg-corporate-200/50 rounded-xl animate-pulse" />
-                <div className="h-10 bg-corporate-200/50 rounded-xl animate-pulse" />
-              </div>
-              <div className="h-24 bg-corporate-200/40 rounded-xl animate-pulse" />
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Results Card (Passed or Disqualified) */}
-      {!isAnalyzingCV && (
-        <Card
-          className={`border transition-all duration-300 ${
-            cvResult.status === 'passed'
-              ? 'border-emerald-200/80 bg-white shadow-card'
-              : 'border-rose-200/80 bg-white shadow-card'
-          }`}
-        >
-          <CardContent className="p-6 sm:p-8 space-y-6">
-            {/* Verdict Header Banner */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-corporate-100">
-              <div className="flex items-start gap-3.5">
-                <div
-                  className={`p-3 rounded-2xl flex items-center justify-center shrink-0 ${
-                    cvResult.status === 'passed'
-                      ? 'bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50'
-                      : 'bg-rose-50 text-rose-600 ring-4 ring-rose-50'
-                  }`}
-                >
-                  {cvResult.status === 'passed' ? (
-                    <CheckCircle2 className="w-7 h-7" />
-                  ) : (
-                    <XCircle className="w-7 h-7" />
-                  )}
-                </div>
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant={cvResult.status === 'passed' ? 'success' : 'danger'}
-                      className="text-xs uppercase font-bold tracking-wider"
-                    >
-                      {cvResult.status === 'passed'
-                        ? 'Passed Screening'
-                        : 'Disqualified (Does not meet criteria)'}
-                    </Badge>
-                    <span className="text-xs text-corporate-400">• Verified by AI</span>
-                  </div>
-
-                  <h3 className="text-lg font-bold text-corporate-900 mt-1">
-                    {cvResult.verdict}
-                  </h3>
-                  <p className="text-xs text-corporate-500 mt-0.5">
-                    Analyzed Document:{' '}
-                    <span className="font-semibold text-corporate-800">{cvResult.fileName}</span> ({cvResult.fileSize})
-                  </p>
-                </div>
-              </div>
-
-              {/* Match Fit Score Circle */}
-              <div className="flex sm:flex-col items-center justify-between sm:justify-center p-3 sm:p-4 rounded-xl bg-corporate-50 border border-corporate-100 shrink-0">
-                <span className="text-[11px] font-bold text-corporate-400 uppercase tracking-wider">
-                  Role Fit Score
-                </span>
-                <span
-                  className={`text-2xl sm:text-3xl font-black ${
-                    cvResult.status === 'passed' ? 'text-emerald-600' : 'text-rose-600'
-                  }`}
-                >
-                  {cvResult.matchScore}%
-                </span>
-              </div>
-            </div>
-
-            {/* Skills Match Section */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-corporate-500">
-                  Identified Matching Skills ({cvResult.matchingSkills.length})
-                </h4>
-                <span className="text-xs text-corporate-400">Benchmark: 80%+ Required</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {cvResult.matchingSkills.map((skill) => (
-                  <div
-                    key={skill.name}
-                    className="p-3.5 rounded-xl border border-corporate-100 bg-corporate-50/40 hover:bg-blush-50/30 transition-colors space-y-1.5"
-                  >
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-corporate-800 flex items-center gap-1.5">
-                        <Check className="w-3.5 h-3.5 text-emerald-500" />
-                        {skill.name}
-                      </span>
-                      <span className="text-[11px] font-bold text-corporate-500">
-                        {skill.relevance}%
-                      </span>
-                    </div>
-                    <Progress
-                      value={skill.relevance}
-                      indicatorColor={
-                        skill.relevance >= 90
-                          ? 'bg-gradient-to-r from-blush-500 to-blush-400'
-                          : 'bg-emerald-500'
-                      }
-                      className="h-1.5"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Gap Analysis or Missing Skills if any */}
-            {cvResult.missingSkills.length > 0 && (
-              <div className="space-y-2 pt-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-corporate-500">
-                  Criteria Gap Analysis / Missing Skills
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {cvResult.missingSkills.map((missing) => (
-                    <Badge
-                      key={missing}
-                      variant={cvResult.status === 'passed' ? 'outline' : 'danger'}
-                      className="text-xs py-1 px-3"
-                    >
-                      {missing}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Key Strengths & Recommendation Notes */}
-            <div className="p-4 rounded-xl bg-corporate-50/70 border border-corporate-200/80 space-y-2">
-              <span className="text-xs font-bold text-corporate-800 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-blush-500" />
-                AI Evaluator Recommendation:
+          {/* Operational Document Table */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="font-bold text-sm text-slate-900">Daftar Dokumen Persyaratan Pelamar</h3>
+              <span className="text-xs text-slate-500">
+                Terisi: <strong className="text-slate-900">{uploadedCount} dari {docList.length} Dokumen</strong>
               </span>
-              <p className="text-xs text-corporate-600 leading-relaxed">
-                {cvResult.recommendationNotes}
-              </p>
             </div>
 
-            {/* Footer Action */}
-            <div className="flex items-center justify-between pt-4 border-t border-corporate-100">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => router.push('/dashboard/profile')}
-                className="text-xs font-semibold"
-              >
-                Back to Profile
-              </Button>
-
-              {cvResult.status === 'passed' ? (
-                <Link href="/dashboard/competency-test">
-                  <Button size="md" className="gap-2 text-xs font-semibold shadow-blush">
-                    Proceed to Stage 4: Online Competency Test <ArrowRight className="w-4 h-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => triggerCVAnalysis(true)}
-                  className="gap-2 text-xs font-semibold"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" /> Re-upload Optimized CV
-                </Button>
-              )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
+                  <tr>
+                    <th className="py-3 px-4 font-bold">Nama Dokumen</th>
+                    <th className="py-3 px-4 font-bold">Sifat</th>
+                    <th className="py-3 px-4 font-bold">File Terunggah</th>
+                    <th className="py-3 px-4 font-bold">Ukuran</th>
+                    <th className="py-3 px-4 font-bold">Status Verifikasi</th>
+                    <th className="py-3 px-4 font-bold text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {docList.map((doc) => (
+                    <tr key={doc.id} className="hover:bg-slate-50/80 transition-colors">
+                      <td className="py-3.5 px-4 font-bold text-slate-800">
+                        <div className="flex items-center gap-2">
+                          <FileText className="w-4 h-4 text-sky-600 shrink-0" />
+                          <span>{doc.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                            doc.type === 'Wajib'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                              : 'bg-sky-50 text-sky-700 border border-sky-200'
+                          }`}
+                        >
+                          {doc.type}
+                        </span>
+                      </td>
+                      <td className="py-3.5 px-4 font-mono text-slate-600 max-w-[200px] truncate">
+                        {doc.fileName || <span className="text-slate-400 italic">Belum ada file</span>}
+                      </td>
+                      <td className="py-3.5 px-4 text-slate-500">
+                        {doc.size || '-'}
+                      </td>
+                      <td className="py-3.5 px-4">
+                        {doc.verified ? (
+                          <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            <span>Terverifikasi</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-600 font-semibold">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>Menunggu Upload</span>
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <label className="px-2.5 py-1 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-700 font-semibold cursor-pointer border border-sky-200 transition-colors">
+                            <span>{doc.fileName ? 'Ganti' : 'Unggah'}</span>
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={() => handleRowUpload(doc.id)}
+                            />
+                          </label>
+                          {doc.fileName && (
+                            <button
+                              onClick={() => handleRowDelete(doc.id)}
+                              className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                              title="Hapus"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
-
