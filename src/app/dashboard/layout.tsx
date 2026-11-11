@@ -14,12 +14,13 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // Bypass legacy layout for dashboard, profile, screening, and competency-test pages
+  // Bypass legacy layout for dashboard, profile, screening, competency-test, and status pages
   if (
     pathname === '/dashboard' ||
     pathname === '/dashboard/profile' ||
     pathname === '/dashboard/screening' ||
-    pathname === '/dashboard/competency-test'
+    pathname === '/dashboard/competency-test' ||
+    pathname === '/dashboard/status'
   ) {
     return <>{children}</>;
   }
