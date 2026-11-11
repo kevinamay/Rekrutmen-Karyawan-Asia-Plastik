@@ -74,18 +74,30 @@ export default function RegisterPage() {
       const user = userCredential.user;
 
       // 2. Set user display name
-      await updateProfile(user, { displayName: fullName.trim() });
+      try {
+        await updateProfile(user, { displayName: fullName.trim() });
+      } catch (profileErr) {
+        console.warn('Update profile error:', profileErr);
+      }
 
-      // 3. Store candidate document in Firestore database
-      await setDoc(doc(db, 'candidates', user.uid), {
-        uid: user.uid,
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-        email: email.trim().toLowerCase(),
-        createdAt: serverTimestamp(),
-        role: 'candidate',
-        applicationStatus: 'registered',
-      });
+      // 3. Store candidate document in Firestore database with timeout safety
+      try {
+        const firestoreWrite = setDoc(doc(db, 'candidates', user.uid), {
+          uid: user.uid,
+          fullName: fullName.trim(),
+          phone: phone.trim(),
+          email: email.trim().toLowerCase(),
+          createdAt: serverTimestamp(),
+          role: 'candidate',
+          applicationStatus: 'registered',
+        });
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Firestore write timeout')), 6000)
+        );
+        await Promise.race([firestoreWrite, timeoutPromise]);
+      } catch (firestoreErr) {
+        console.warn('Firestore write warning:', firestoreErr);
+      }
 
       // 4. Update in-app state context
       updateCandidate({
@@ -99,7 +111,7 @@ export default function RegisterPage() {
       console.error('Firebase registration error:', err);
       let errorMsg = 'Gagal mendaftar akun. Silakan coba lagi.';
       if (err.code === 'auth/email-already-in-use') {
-        errorMsg = 'Alamat email ini sudah terdaftar. Silakan gunakan email lain atau masuk.';
+        errorMsg = 'Alamat email ini sudah terdaftar di sistem. Silakan masuk via halaman Login atau gunakan email lain.';
       } else if (err.code === 'auth/invalid-email') {
         errorMsg = 'Format alamat email tidak valid.';
       } else if (err.code === 'auth/weak-password') {

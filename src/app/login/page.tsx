@@ -54,10 +54,14 @@ export default function LoginPage() {
       const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
       const user = userCredential.user;
 
-      // 2. Fetch candidate details from Firestore
+      // 2. Fetch candidate details from Firestore with timeout protection
       try {
-        const candidateDoc = await getDoc(doc(db, 'candidates', user.uid));
-        if (candidateDoc.exists()) {
+        const fetchDoc = getDoc(doc(db, 'candidates', user.uid));
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Firestore read timeout')), 4000)
+        );
+        const candidateDoc = (await Promise.race([fetchDoc, timeoutPromise])) as any;
+        if (candidateDoc && candidateDoc.exists()) {
           const data = candidateDoc.data();
           updateCandidate({
             fullName: data.fullName || user.displayName || '',
@@ -72,6 +76,12 @@ export default function LoginPage() {
         }
       } catch (docErr) {
         console.warn('Could not retrieve candidate data from Firestore:', docErr);
+        if (user.displayName || user.email) {
+          updateCandidate({
+            fullName: user.displayName || '',
+            email: user.email || '',
+          });
+        }
       }
 
       router.push('/dashboard/profile');

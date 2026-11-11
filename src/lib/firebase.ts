@@ -11,10 +11,12 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:182410685917:web:46bd24f070c078e7a15a34"
 };
 
+const databaseId = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_ID || "default";
+
 // Initialize Firebase once
 const app: FirebaseApp = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
+const db: Firestore = getFirestore(app, databaseId);
 
 export { app, auth, db, firebaseConfig };
 
