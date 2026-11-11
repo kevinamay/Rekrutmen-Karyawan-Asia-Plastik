@@ -77,10 +77,11 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen relative flex flex-col justify-between bg-white text-slate-800 font-sans p-6 pb-10">
-      {/* Background soft sky blue ambient waves */}
-      <div className="absolute top-0 inset-x-0 h-72 bg-gradient-to-b from-sky-100/50 via-sky-50/20 to-transparent pointer-events-none" />
-      <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-sky-100/40 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-screen relative flex flex-col justify-between bg-gradient-to-br from-sky-100/90 via-sky-50/60 to-blue-100/70 text-slate-800 font-sans p-6 pb-10 overflow-hidden">
+      {/* Background ambient light blue gradient blurs */}
+      <div className="absolute -top-24 -left-24 w-96 h-96 bg-sky-300/35 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-24 w-[480px] h-[480px] bg-blue-200/40 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-24 left-1/4 w-[420px] h-[420px] bg-sky-200/40 rounded-full blur-3xl pointer-events-none" />
 
       {/* Top Bar */}
       <header className="relative z-10 max-w-4xl w-full mx-auto flex items-center justify-between">
@@ -126,7 +127,7 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Masukkan nama lengkap"
-                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
+                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
                   errors.fullName ? 'border-red-500' : ''
                 }`}
               />
@@ -146,7 +147,7 @@ export default function RegisterPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="08123456789"
-                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
+                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
                     errors.phone ? 'border-red-500' : ''
                   }`}
                 />
@@ -165,7 +166,7 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@email.com"
-                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
+                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
                     errors.email ? 'border-red-500' : ''
                   }`}
                 />
@@ -192,7 +193,7 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 8 karakter"
-                className={`pl-10 pr-10 h-11 text-sm rounded-xl border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
+                className={`pl-10 pr-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
                   errors.password ? 'border-red-500' : ''
                 }`}
               />
@@ -226,7 +227,7 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Ulangi kata sandi"
-                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-slate-50/50 hover:bg-white focus:bg-white focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
+                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
                   errors.confirmPassword ? 'border-red-500' : ''
                 }`}
               />
