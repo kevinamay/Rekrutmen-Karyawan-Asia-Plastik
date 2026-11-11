@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile, signOut } from 'firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function RegisterPage() {
@@ -91,14 +91,15 @@ export default function RegisterPage() {
         applicationStatus: 'registered',
       });
 
-      // 4. Update in-app state context
-      updateCandidate({
-        fullName: fullName.trim(),
-        email: email.trim().toLowerCase(),
-        phone: phone.trim(),
-      });
+      // 4. Sign out so user must log in from login page
+      try {
+        await signOut(auth);
+      } catch (signOutErr) {
+        console.warn('Sign out error:', signOutErr);
+      }
 
-      router.push('/dashboard/profile');
+      // 5. Redirect to login page with registered flag and email
+      router.push(`/login?registered=true&email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err: any) {
       console.error('Firebase registration error:', err);
       let errorMsg = 'Gagal mendaftar akun. Silakan coba lagi.';
@@ -324,7 +325,7 @@ export default function RegisterPage() {
               </span>
             ) : (
               <>
-                <span>Daftar Sekarang & Lengkapi Profil</span>
+                <span>Daftar Akun Sekarang</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}

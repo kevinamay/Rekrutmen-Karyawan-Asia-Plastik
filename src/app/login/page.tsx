@@ -33,6 +33,20 @@ export default function LoginPage() {
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('registered') === 'true') {
+        setSuccessMessage('Pendaftaran akun berhasil! Silakan masuk dengan kata sandi Anda.');
+        const emailParam = params.get('email');
+        if (emailParam) {
+          setEmail(emailParam);
+        }
+      }
+    }
+  }, []);
 
   // Forgot password modal state
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
@@ -178,6 +192,13 @@ export default function LoginPage() {
             Portal Rekrutmen Karyawan CV. Asia Plastik
           </p>
         </div>
+
+        {successMessage && (
+          <div className="p-3.5 mb-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{successMessage}</span>
+          </div>
+        )}
 
         {errorMessage && (
           <div className="p-3 mb-5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
