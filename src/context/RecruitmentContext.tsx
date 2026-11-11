@@ -13,25 +13,98 @@ import {
   INITIAL_STAGES,
   MOCK_PASSED_CV_RESULT,
   MOCK_DISQUALIFIED_CV_RESULT,
-  INITIAL_INTERVIEW_MESSAGES,
 } from '@/data/mockRecruitmentData';
+
+export interface UploadedDocItem {
+  id: string;
+  name: string;
+  type: 'Wajib' | 'Opsional';
+  fileName: string | null;
+  size: string | null;
+  verified: boolean;
+  updatedAt: string;
+}
+
+export const DEFAULT_REQUIRED_DOCS: UploadedDocItem[] = [
+  {
+    id: 'cv',
+    name: 'Curriculum Vitae (CV) Pelamar',
+    type: 'Wajib',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+  {
+    id: 'ktp',
+    name: 'Scan e-KTP Asli',
+    type: 'Wajib',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+  {
+    id: 'ijazah',
+    name: 'Scan Ijazah & Transkrip S1/D4',
+    type: 'Wajib',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+  {
+    id: 'foto',
+    name: 'Pas Foto Formal 4x6 (Latar Merah)',
+    type: 'Wajib',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+  {
+    id: 'skck',
+    name: 'Surat Catatan Kepolisian (SKCK)',
+    type: 'Wajib',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+  {
+    id: 'k3',
+    name: 'Sertifikat K3 / Sertifikat Pelatihan Mutu',
+    type: 'Opsional',
+    fileName: null,
+    size: null,
+    verified: false,
+    updatedAt: '-',
+  },
+];
 
 interface RecruitmentContextType {
   candidate: Candidate;
   stages: StageInfo[];
-  cvResult: CVScreeningResult;
-  isAnalyzingCV: boolean;
-  cvUploadProgress: number;
+  uploadedDocs: UploadedDocItem[];
+  profileCompleted: boolean;
   competencyAnswers: Record<number, string>;
-  competencyFlagged: number[];
-  interviewMessages: InterviewMessage[];
-  isAiTyping: boolean;
-  psychAnswers: Record<number, number>;
-  practicalSubmitted: boolean;
-  practicalSubmissionData: { repoUrl: string; previewUrl: string; notes: string } | null;
+  competencyScore: number | null;
+  competencyPassed: boolean | null;
+  competencyCompletedAt: string | null;
 
   // Actions
   updateCandidate: (data: Partial<Candidate>) => void;
+  setUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDocItem[]>>;
+  saveProfileData: (data: any) => void;
+  saveCompetencyResult: (answers: Record<number, string>, score: number, passed: boolean) => void;
+  updateStageStatus: (stageId: ApplicationStageId, status: StageInfo['status'], score?: number) => void;
+  resetAllData: () => void;
+  recalculateStages: () => void;
+
+  // Legacy stubs for compatibility
+  cvResult: CVScreeningResult;
+  isAnalyzingCV: boolean;
+  cvUploadProgress: number;
   triggerCVAnalysis: (simulatePassed?: boolean) => void;
   setCVOutcome: (outcome: 'passed' | 'disqualified') => void;
   setCompetencyAnswer: (questionId: number, optionId: string) => void;
@@ -40,60 +113,150 @@ interface RecruitmentContextType {
   sendCandidateMessage: (text: string) => void;
   setPsychAnswer: (questionId: number, value: number) => void;
   submitPsychTest: () => void;
-  submitPracticalTest: (data: { repoUrl: string; previewUrl: string; notes: string }) => void;
-  setFinalDecision: (decision: 'pending' | 'practical_required' | 'hired' | 'rejected') => void;
-  updateStageStatus: (stageId: ApplicationStageId, status: StageInfo['status'], score?: number) => void;
-  resetAllDemoData: () => void;
+  submitPracticalTest: (data: any) => void;
+  setFinalDecision: (decision: any) => void;
 }
 
 const RecruitmentContext = createContext<RecruitmentContextType | undefined>(undefined);
 
+const LOCAL_STORAGE_KEY = 'asiaplastik_recruitment_v1';
+
 export function RecruitmentProvider({ children }: { children: React.ReactNode }) {
   const [candidate, setCandidate] = useState<Candidate>(INITIAL_CANDIDATE);
   const [stages, setStages] = useState<StageInfo[]>(INITIAL_STAGES);
-  const [cvResult, setCVResult] = useState<CVScreeningResult>(MOCK_PASSED_CV_RESULT);
-  const [isAnalyzingCV, setIsAnalyzingCV] = useState(false);
-  const [cvUploadProgress, setCvUploadProgress] = useState(100);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocItem[]>(DEFAULT_REQUIRED_DOCS);
+  const [profileCompleted, setProfileCompleted] = useState(false);
+  const [competencyAnswers, setCompetencyAnswers] = useState<Record<number, string>>({});
+  const [competencyScore, setCompetencyScore] = useState<number | null>(null);
+  const [competencyPassed, setCompetencyPassed] = useState<boolean | null>(null);
+  const [competencyCompletedAt, setCompetencyCompletedAt] = useState<string | null>(null);
 
-  // Competency quiz state
-  const [competencyAnswers, setCompetencyAnswers] = useState<Record<number, string>>({
-    1: 'A',
-    2: 'A',
-    3: 'A',
-    4: 'A',
-  });
-  const [competencyFlagged, setCompetencyFlagged] = useState<number[]>([]);
+  // Load persisted state from localStorage on client mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.candidate) setCandidate(parsed.candidate);
+        if (parsed.uploadedDocs) setUploadedDocs(parsed.uploadedDocs);
+        if (parsed.profileCompleted !== undefined) setProfileCompleted(parsed.profileCompleted);
+        if (parsed.competencyAnswers) setCompetencyAnswers(parsed.competencyAnswers);
+        if (parsed.competencyScore !== undefined) setCompetencyScore(parsed.competencyScore);
+        if (parsed.competencyPassed !== undefined) setCompetencyPassed(parsed.competencyPassed);
+        if (parsed.competencyCompletedAt) setCompetencyCompletedAt(parsed.competencyCompletedAt);
+      }
+    } catch (e) {
+      console.warn('Error reading recruitment state from localStorage:', e);
+    }
+  }, []);
 
-  // AI Interview state
-  const [interviewMessages, setInterviewMessages] = useState<InterviewMessage[]>(INITIAL_INTERVIEW_MESSAGES);
-  const [isAiTyping, setIsAiTyping] = useState(false);
+  // Save changes to localStorage
+  const persistState = (overrides?: any) => {
+    try {
+      const stateToSave = {
+        candidate,
+        uploadedDocs,
+        profileCompleted,
+        competencyAnswers,
+        competencyScore,
+        competencyPassed,
+        competencyCompletedAt,
+        ...overrides,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
+    } catch (e) {
+      console.warn('Error saving recruitment state to localStorage:', e);
+    }
+  };
 
-  // Psych test state
-  const [psychAnswers, setPsychAnswers] = useState<Record<number, number>>({
-    1: 5,
-    2: 5,
-    3: 4,
-    4: 5,
-    5: 5,
-    6: 4,
-    7: 5,
-    8: 4,
-  });
+  // Dynamically recalculate stages based on real candidate progress
+  useEffect(() => {
+    const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
+    const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
+    const allRequiredUploaded = requiredDocs.length > 0 && uploadedRequiredCount === requiredDocs.length;
 
-  // Practical test submission
-  const [practicalSubmitted, setPracticalSubmitted] = useState(false);
-  const [practicalSubmissionData, setPracticalSubmissionData] = useState<{
-    repoUrl: string;
-    previewUrl: string;
-    notes: string;
-  } | null>({
-    repoUrl: 'https://github.com/sarah-jenkins/nexacorp-lead-analytics',
-    previewUrl: 'https://nexacorp-challenge.vercel.app',
-    notes: 'Completed all 5 core requirements including 91% Vitest coverage and WCAG 2.1 AA keyboard support.',
-  });
+    setStages((prev) =>
+      prev.map((s) => {
+        if (s.id === 'application') {
+          return { ...s, status: 'completed', score: 100 };
+        }
+        if (s.id === 'profile') {
+          return {
+            ...s,
+            status: profileCompleted ? 'completed' : 'in_progress',
+            score: profileCompleted ? 100 : undefined,
+          };
+        }
+        if (s.id === 'cv-screening') {
+          if (allRequiredUploaded) {
+            return { ...s, status: 'passed', score: 95 };
+          }
+          if (uploadedRequiredCount > 0) {
+            return { ...s, status: 'in_progress' };
+          }
+          return { ...s, status: profileCompleted ? 'in_progress' : 'pending' };
+        }
+        if (s.id === 'competency-test') {
+          if (competencyScore !== null) {
+            return {
+              ...s,
+              status: (competencyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
+              score: competencyScore,
+            };
+          }
+          return { ...s, status: allRequiredUploaded ? 'in_progress' : 'pending' };
+        }
+        if (s.id === 'interview') {
+          if (competencyPassed) {
+            return { ...s, status: 'in_progress' };
+          }
+          return { ...s, status: 'pending' };
+        }
+        return s;
+      })
+    );
+  }, [profileCompleted, uploadedDocs, competencyScore, competencyPassed]);
 
   const updateCandidate = (data: Partial<Candidate>) => {
-    setCandidate((prev) => ({ ...prev, ...data }));
+    setCandidate((prev) => {
+      const updated = { ...prev, ...data };
+      persistState({ candidate: updated });
+      return updated;
+    });
+  };
+
+  const saveProfileData = (data: any) => {
+    setProfileCompleted(true);
+    if (data.fullName || data.phone || data.email) {
+      updateCandidate({
+        fullName: data.fullName || candidate.fullName,
+        phone: data.phone || candidate.phone,
+        email: data.email || candidate.email,
+      });
+    }
+    persistState({ profileCompleted: true });
+  };
+
+  const saveCompetencyResult = (
+    answers: Record<number, string>,
+    score: number,
+    passed: boolean
+  ) => {
+    const completedAt = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    setCompetencyAnswers(answers);
+    setCompetencyScore(score);
+    setCompetencyPassed(passed);
+    setCompetencyCompletedAt(completedAt);
+    persistState({
+      competencyAnswers: answers,
+      competencyScore: score,
+      competencyPassed: passed,
+      competencyCompletedAt: completedAt,
+    });
   };
 
   const updateStageStatus = (
@@ -106,124 +269,74 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     );
   };
 
+  const resetAllData = () => {
+    setCandidate(INITIAL_CANDIDATE);
+    setStages(INITIAL_STAGES);
+    setUploadedDocs(DEFAULT_REQUIRED_DOCS);
+    setProfileCompleted(false);
+    setCompetencyAnswers({});
+    setCompetencyScore(null);
+    setCompetencyPassed(null);
+    setCompetencyCompletedAt(null);
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    } catch (e) {}
+  };
+
+  const recalculateStages = () => {
+    // Triggers dynamic effect re-evaluation
+  };
+
+  // Legacy stubs
+  const [cvResult, setCVResult] = useState<CVScreeningResult>(MOCK_PASSED_CV_RESULT);
+  const [isAnalyzingCV, setIsAnalyzingCV] = useState(false);
+  const [cvUploadProgress, setCvUploadProgress] = useState(100);
+
   const triggerCVAnalysis = (simulatePassed = true) => {
     setIsAnalyzingCV(true);
-    setCvUploadProgress(15);
-
-    const stepInterval = setInterval(() => {
-      setCvUploadProgress((curr) => {
-        if (curr >= 95) {
-          clearInterval(stepInterval);
-          return 95;
-        }
-        return curr + 20;
-      });
-    }, 400);
-
     setTimeout(() => {
-      clearInterval(stepInterval);
-      setCvUploadProgress(100);
       setIsAnalyzingCV(false);
       setCVResult(simulatePassed ? MOCK_PASSED_CV_RESULT : MOCK_DISQUALIFIED_CV_RESULT);
-      updateStageStatus('cv-screening', simulatePassed ? 'passed' : 'disqualified', simulatePassed ? 94 : 42);
-    }, 2400);
+    }, 1000);
   };
 
   const setCVOutcome = (outcome: 'passed' | 'disqualified') => {
     setCVResult(outcome === 'passed' ? MOCK_PASSED_CV_RESULT : MOCK_DISQUALIFIED_CV_RESULT);
-    updateStageStatus('cv-screening', outcome, outcome === 'passed' ? 94 : 42);
   };
 
-  const setCompetencyAnswer = (questionId: number, optionId: string) => {
-    setCompetencyAnswers((prev) => ({ ...prev, [questionId]: optionId }));
+  const setCompetencyAnswer = (qId: number, optId: string) => {
+    setCompetencyAnswers((prev) => ({ ...prev, [qId]: optId }));
   };
 
-  const toggleFlagQuestion = (questionId: number) => {
-    setCompetencyFlagged((prev) =>
-      prev.includes(questionId) ? prev.filter((id) => id !== questionId) : [...prev, questionId]
-    );
-  };
-
-  const submitCompetencyTest = () => {
-    updateStageStatus('competency-test', 'passed', 92);
-  };
-
-  const sendCandidateMessage = (text: string) => {
-    const newMsg: InterviewMessage = {
-      id: `msg-${Date.now()}`,
-      sender: 'candidate',
-      senderName: candidate.fullName,
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      competencyEvaluation: {
-        clarityScore: 94,
-        depthScore: 90,
-        demonstratedSkills: ['System Design', 'Defensive Programming', 'Frontend Resiliency'],
-        feedbackTip: 'Strong structured rationale and focus on high availability.',
-      },
-    };
-
-    setInterviewMessages((prev) => [...prev, newMsg]);
-    setIsAiTyping(true);
-
-    // AI HR automatic contextual reply simulation
-    setTimeout(() => {
-      setIsAiTyping(false);
-      const aiReply: InterviewMessage = {
-        id: `msg-${Date.now() + 1}`,
-        sender: 'ai',
-        senderName: 'Aura HR (AI Recruiter)',
-        avatar: '/ai-avatar.png',
-        text: `Impressive response, ${candidate.fullName.split(' ')[0]}. That demonstrates deep architectural maturity. One final question regarding team leadership: When mentoring senior developers who disagree on adopting a new standard or pattern, how do you facilitate consensus without slowing sprint velocity?`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setInterviewMessages((prev) => [...prev, aiReply]);
-      updateStageStatus('ai-interview', 'passed', 91);
-    }, 2200);
-  };
-
-  const setPsychAnswer = (questionId: number, value: number) => {
-    setPsychAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
-  const submitPsychTest = () => {
-    updateStageStatus('psychology-test', 'passed', 95);
-  };
-
-  const submitPracticalTest = (data: { repoUrl: string; previewUrl: string; notes: string }) => {
-    setPracticalSubmissionData(data);
-    setPracticalSubmitted(true);
-    updateStageStatus('practical-final', 'completed', 96);
-  };
-
-  const setFinalDecision = (decision: 'pending' | 'practical_required' | 'hired' | 'rejected') => {
-    setCandidate((prev) => ({ ...prev, finalDecision: decision }));
-  };
-
-  const resetAllDemoData = () => {
-    setCandidate(INITIAL_CANDIDATE);
-    setStages(INITIAL_STAGES);
-    setCVResult(MOCK_PASSED_CV_RESULT);
-    setInterviewMessages(INITIAL_INTERVIEW_MESSAGES);
-    setPracticalSubmitted(false);
-  };
+  const toggleFlagQuestion = () => {};
+  const submitCompetencyTest = () => {};
+  const sendCandidateMessage = () => {};
+  const setPsychAnswer = () => {};
+  const submitPsychTest = () => {};
+  const submitPracticalTest = () => {};
+  const setFinalDecision = () => {};
 
   return (
     <RecruitmentContext.Provider
       value={{
         candidate,
         stages,
+        uploadedDocs,
+        profileCompleted,
+        competencyAnswers,
+        competencyScore,
+        competencyPassed,
+        competencyCompletedAt,
+        updateCandidate,
+        setUploadedDocs,
+        saveProfileData,
+        saveCompetencyResult,
+        updateStageStatus,
+        resetAllData,
+        recalculateStages,
         cvResult,
         isAnalyzingCV,
         cvUploadProgress,
-        competencyAnswers,
-        competencyFlagged,
-        interviewMessages,
-        isAiTyping,
-        psychAnswers,
-        practicalSubmitted,
-        practicalSubmissionData,
-        updateCandidate,
         triggerCVAnalysis,
         setCVOutcome,
         setCompetencyAnswer,
@@ -234,8 +347,6 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         submitPsychTest,
         submitPracticalTest,
         setFinalDecision,
-        updateStageStatus,
-        resetAllDemoData,
       }}
     >
       {children}
@@ -250,4 +361,3 @@ export function useRecruitment() {
   }
   return context;
 }
-

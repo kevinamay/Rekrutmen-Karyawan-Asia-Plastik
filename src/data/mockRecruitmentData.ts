@@ -13,7 +13,7 @@ export const INITIAL_STAGES: StageInfo[] = [
     route: '/login',
     status: 'completed',
     score: 100,
-    completedAt: '28 Okt 2026',
+    completedAt: 'Hari Pendaftaran',
   },
   {
     id: 'profile',
@@ -21,19 +21,15 @@ export const INITIAL_STAGES: StageInfo[] = [
     shortTitle: 'Biodata',
     description: 'Identitas e-KTP, kontak domisili, dan riwayat pendidikan S1',
     route: '/dashboard/profile',
-    status: 'completed',
-    score: 100,
-    completedAt: '29 Okt 2026',
+    status: 'in_progress',
   },
   {
     id: 'cv-screening',
     title: 'Verifikasi Berkas & CV Screening',
     shortTitle: 'Berkas & CV',
-    description: 'Pemeriksaan berkas lamaran, sertifikat ISO 9001, dan SKCK',
+    description: 'Pemeriksaan berkas lamaran, scan KTP, ijazah, foto, dan SKCK',
     route: '/dashboard/screening',
-    status: 'passed',
-    score: 94,
-    completedAt: '30 Okt 2026',
+    status: 'pending',
   },
   {
     id: 'competency-test',
@@ -41,9 +37,7 @@ export const INITIAL_STAGES: StageInfo[] = [
     shortTitle: 'Tes Kompetensi',
     description: 'Uji kompetensi mutu manufaktur plastik, defek injeksi, MFI, dan K3',
     route: '/dashboard/competency-test',
-    status: 'passed',
-    score: 92,
-    completedAt: '31 Okt 2026',
+    status: 'pending',
   },
   {
     id: 'interview',
@@ -51,7 +45,7 @@ export const INITIAL_STAGES: StageInfo[] = [
     shortTitle: 'Wawancara',
     description: 'Evaluasi kepemimpinan & teknis operasional bersama Plant Manager',
     route: '/dashboard/status',
-    status: 'in_progress',
+    status: 'pending',
   },
   {
     id: 'mcu',
@@ -72,71 +66,54 @@ export const INITIAL_STAGES: StageInfo[] = [
 ];
 
 export const INITIAL_CANDIDATE: Candidate = {
-  id: 'ASP-2027-0891',
-  fullName: 'Kevina Maydiva Heriansaputri',
-  email: 'kevinamay23@gmail.com',
-  phone: '082244109503',
+  id: '',
+  fullName: '',
+  email: '',
+  phone: '',
   location: 'Sidoarjo, Jawa Timur (Pabrik CV. Asia Plastik)',
   headline: 'Pelamar Calon Supervisor Quality Control (QC)',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+  avatarUrl: '',
   linkedinUrl: '',
   githubUrl: '',
   portfolioUrl: '',
-  summary:
-    'Kandidat pelamar kerja posisi Supervisor Quality Control (QC) CV. Asia Plastik di Sidoarjo. Lulusan S1 Teknik, memiliki sertifikasi ISO 9001:2015, dan pengalaman inspeksi mutu cetakan injeksi plastik.',
+  summary: '',
   appliedRole: 'Supervisor Quality Control (QC)',
   appliedDepartment: 'Quality Assurance & Control',
   appliedDate: '11 Februari 2027',
   currentStage: 'profile',
-  overallScore: 93,
+  overallScore: 0,
   finalDecision: 'pending',
 };
 
 export const MOCK_PASSED_CV_RESULT: CVScreeningResult = {
-  fileName: 'CV_Kevina_Maydiva_QC_Supervisor.pdf',
-  fileSize: '1.24 MB',
-  uploadedAt: '30 Okt 2026 • 14:22 WIB',
+  fileName: '',
+  fileSize: '',
+  uploadedAt: '',
   status: 'passed',
-  matchScore: 94,
-  verdict: 'Sangat Sesuai — Pelamar memenuhi kriteria utama kompetensi kendali mutu plastik.',
-  matchingSkills: [
-    { name: 'Inspeksi Mesin Injeksi & Ekstrusi Plastik', level: 'Mahir', relevance: 96 },
-    { name: 'Sistem Manajemen Mutu ISO 9001:2015 & NCR', level: 'Bersertifikat', relevance: 95 },
-    { name: 'Pengujian Laboratorium Melt Flow Index (MFI)', level: 'Mahir', relevance: 92 },
-    { name: 'Alat Ukur Presisi (Point Micrometer & Ultrasonic)', level: 'Mahir', relevance: 95 },
-    { name: 'Kesehatan & Keselamatan Kerja (K3) & Budaya 5R', level: 'Bersertifikat', relevance: 94 },
-  ],
-  missingSkills: ['Pengoperasian Mesin Thermoforming Kapasitas Tinggi (Non-kritis)'],
-  keyStrengths: [
-    'Memiliki pengalaman inspeksi mutu cetakan molding plastik dan sertifikat ISO 9001 Internal Auditor.',
-    'Domisili Sidoarjo mempermudah mobilitas pengawasan shift pabrik.',
-  ],
-  recommendationNotes:
-    'Kandidat sangat direkomendasikan untuk melanjutkan ke tahapan wawancara teknis lapangan bersama Plant Manager.',
-  aiModelVersion: 'AsiaPlastik-HR-Screening-v2.1',
+  matchScore: 0,
+  verdict: 'Berkas sedang diverifikasi oleh Tim HRD CV. Asia Plastik.',
+  matchingSkills: [],
+  missingSkills: [],
+  keyStrengths: [],
+  recommendationNotes: '',
+  aiModelVersion: 'AsiaPlastik-HR-v2',
 };
 
 export const MOCK_DISQUALIFIED_CV_RESULT: CVScreeningResult = {
-  fileName: 'CV_Pelamar_NonMatch.pdf',
-  fileSize: '850 KB',
-  uploadedAt: '30 Okt 2026 • 10:15 WIB',
+  fileName: '',
+  fileSize: '',
+  uploadedAt: '',
   status: 'disqualified',
-  matchScore: 42,
-  verdict: 'Belum Memenuhi Syarat — Pengalaman teknis kendali mutu belum mencukupi standar minimum.',
-  matchingSkills: [
-    { name: 'Administrasi Umum', level: 'Dasar', relevance: 60 },
-  ],
-  missingSkills: [
-    'Sertifikasi ISO 9001:2015',
-    'Pengalaman Operasional Mesin Injeksi Plastik',
-    'Pengujian Laboratorium Biji Plastik (MFI)',
-  ],
-  keyStrengths: ['Memiliki motivasi kerja tinggi.'],
-  recommendationNotes: 'Berkas belum memenuhi kualifikasi teknis minimum Supervisor QC.',
-  aiModelVersion: 'AsiaPlastik-HR-Screening-v2.1',
+  matchScore: 0,
+  verdict: 'Berkas belum memenuhi kualifikasi minimum yang dipersyaratkan.',
+  matchingSkills: [],
+  missingSkills: [],
+  keyStrengths: [],
+  recommendationNotes: '',
+  aiModelVersion: 'AsiaPlastik-HR-v2',
 };
 
-// Legacy stubs kept for type-safety
+// Legacy stubs kept for backwards compatibility
 export const INITIAL_INTERVIEW_MESSAGES = [];
 export const SUGGESTED_INTERVIEW_RESPONSES = [];
 export const MOCK_PSYCH_QUESTIONS = [];

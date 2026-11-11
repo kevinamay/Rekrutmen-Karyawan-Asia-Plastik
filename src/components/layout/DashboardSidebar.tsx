@@ -28,12 +28,13 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
   const router = useRouter();
   const { candidate, updateCandidate } = useRecruitment();
 
-  const [candidateName, setCandidateName] = useState(
-    candidate.fullName || 'Kevina Maydiva Heriansaputri'
-  );
-  const [candidateEmail, setCandidateEmail] = useState(
-    candidate.email || 'kevinamay23@gmail.com'
-  );
+  const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
+  const [candidateEmail, setCandidateEmail] = useState(candidate.email || '');
+
+  useEffect(() => {
+    if (candidate.fullName) setCandidateName(candidate.fullName);
+    if (candidate.email) setCandidateEmail(candidate.email);
+  }, [candidate.fullName, candidate.email]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -45,12 +46,14 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
           const userDoc = await getDoc(doc(db, 'candidates', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            if (data.fullName) setCandidateName(data.fullName);
-            if (data.email) setCandidateEmail(data.email);
+            const realName = data.fullName || user.displayName || 'Pelamar';
+            const realEmail = data.email || user.email || '';
+            setCandidateName(realName);
+            setCandidateEmail(realEmail);
             updateCandidate({
-              fullName: data.fullName || user.displayName || candidateName,
-              email: data.email || user.email || candidateEmail,
-              phone: data.phone || candidate.phone,
+              fullName: realName,
+              email: realEmail,
+              phone: data.phone || candidate.phone || '',
             });
           }
         } catch (err) {
@@ -60,10 +63,14 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
     });
 
     return () => unsubscribe();
-  }, [candidate.phone, candidateEmail, candidateName, updateCandidate]);
+  }, [candidate.phone, updateCandidate]);
 
   const handleSignOut = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.warn('Sign out notice:', e);
+    }
     router.push('/login');
   };
 
@@ -99,6 +106,10 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       active: pathname === '/dashboard/status',
     },
   ];
+
+  const initialLetter = candidateName && candidateName !== 'Pelamar'
+    ? candidateName.charAt(0).toUpperCase()
+    : 'P';
 
   return (
     <>
@@ -169,11 +180,11 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
         <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
-              {candidateName ? candidateName.charAt(0).toUpperCase() : 'A'}
+              {initialLetter}
             </div>
             <div className="min-w-0 flex-1">
               <span className="text-xs font-bold text-white block truncate">{candidateName}</span>
-              <span className="text-[10px] text-slate-400 block truncate">{candidateEmail}</span>
+              <span className="text-[10px] text-slate-400 block truncate">{candidateEmail || 'Kandidat Pelamar'}</span>
             </div>
           </div>
 
