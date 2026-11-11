@@ -18,6 +18,9 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useRecruitment } from '@/context/RecruitmentContext';
+import { auth, db } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,7 +49,7 @@ export default function RegisterPage() {
 
   const strength = getPasswordStrength();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -65,15 +68,51 @@ export default function RegisterPage() {
     setErrors({});
     setIsLoading(true);
 
-    updateCandidate({
-      fullName,
-      email,
-    });
+    try {
+      // 1. Create account in Firebase Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const user = userCredential.user;
 
-    setTimeout(() => {
-      setIsLoading(false);
+      // 2. Set user display name
+      await updateProfile(user, { displayName: fullName.trim() });
+
+      // 3. Store candidate document in Firestore database
+      await setDoc(doc(db, 'candidates', user.uid), {
+        uid: user.uid,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim().toLowerCase(),
+        createdAt: serverTimestamp(),
+        role: 'candidate',
+        applicationStatus: 'registered',
+      });
+
+      // 4. Update in-app state context
+      updateCandidate({
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        phone: phone.trim(),
+      });
+
       router.push('/dashboard/profile');
-    }, 850);
+    } catch (err: any) {
+      console.error('Firebase registration error:', err);
+      let errorMsg = 'Gagal mendaftar akun. Silakan coba lagi.';
+      if (err.code === 'auth/email-already-in-use') {
+        errorMsg = 'Alamat email ini sudah terdaftar. Silakan gunakan email lain atau masuk.';
+      } else if (err.code === 'auth/invalid-email') {
+        errorMsg = 'Format alamat email tidak valid.';
+      } else if (err.code === 'auth/weak-password') {
+        errorMsg = 'Kata sandi terlalu lemah. Gunakan minimal 8 karakter.';
+      } else if (err.code === 'auth/network-request-failed') {
+        errorMsg = 'Koneksi jaringan gagal. Periksa koneksi internet Anda.';
+      } else if (err.message) {
+        errorMsg = err.message;
+      }
+      setErrors({ general: errorMsg });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -115,6 +154,12 @@ export default function RegisterPage() {
             Portal Rekrutmen Karyawan CV. Asia Plastik
           </p>
         </div>
+
+        {errors.general && (
+          <div className="p-3 mb-5 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-medium">
+            {errors.general}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -269,7 +314,10 @@ export default function RegisterPage() {
             className="w-full h-11 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-600/20 transition-all mt-4 flex items-center justify-center gap-2"
           >
             {isLoading ? (
-              <span>Mendaftarkan...</span>
+              <span className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Mendaftarkan ke Database...
+              </span>
             ) : (
               <>
                 <span>Daftar Sekarang & Lengkapi Profil</span>

@@ -17,9 +17,14 @@ import {
   ArrowLeft,
   CheckCircle2,
 } from 'lucide-react';
+import { useRecruitment } from '@/context/RecruitmentContext';
+import { auth, db } from '@/lib/firebase';
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { updateCandidate } = useRecruitment();
 
   // Form State
   const [email, setEmail] = useState('');
@@ -33,26 +38,79 @@ export default function LoginPage() {
   const [forgotModalOpen, setForgotModalOpen] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState('');
   const [recoverySent, setRecoverySent] = useState(false);
+  const [isRecoveryLoading, setIsRecoveryLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setErrorMessage('Silakan lengkapi email/nomor WhatsApp dan password Anda.');
+      setErrorMessage('Silakan lengkapi email dan password akun Anda.');
       return;
     }
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      // 1. Sign in with Firebase Auth
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      const user = userCredential.user;
+
+      // 2. Fetch candidate details from Firestore
+      try {
+        const candidateDoc = await getDoc(doc(db, 'candidates', user.uid));
+        if (candidateDoc.exists()) {
+          const data = candidateDoc.data();
+          updateCandidate({
+            fullName: data.fullName || user.displayName || '',
+            email: data.email || user.email || '',
+            phone: data.phone || '',
+          });
+        } else if (user.displayName || user.email) {
+          updateCandidate({
+            fullName: user.displayName || '',
+            email: user.email || '',
+          });
+        }
+      } catch (docErr) {
+        console.warn('Could not retrieve candidate data from Firestore:', docErr);
+      }
+
       router.push('/dashboard/profile');
-    }, 800);
+    } catch (err: any) {
+      console.error('Firebase login error:', err);
+      let msg = 'Gagal masuk. Periksa kembali email dan kata sandi Anda.';
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/wrong-password' ||
+        err.code === 'auth/invalid-credential'
+      ) {
+        msg = 'Email atau kata sandi yang Anda masukkan salah.';
+      } else if (err.code === 'auth/invalid-email') {
+        msg = 'Format alamat email tidak valid.';
+      } else if (err.code === 'auth/too-many-requests') {
+        msg = 'Terlalu banyak percobaan gagal. Silakan coba lagi beberapa saat lagi atau reset password.';
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = 'Koneksi jaringan gagal. Periksa koneksi internet Anda.';
+      }
+      setErrorMessage(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSendRecovery = (e: React.FormEvent) => {
+  const handleSendRecovery = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!recoveryEmail) return;
-    setRecoverySent(true);
+    setIsRecoveryLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, recoveryEmail.trim());
+      setRecoverySent(true);
+    } catch (err: any) {
+      console.error('Password reset error:', err);
+      // For security and user reassurance, mark as sent
+      setRecoverySent(true);
+    } finally {
+      setIsRecoveryLoading(false);
+    }
   };
 
   return (
@@ -104,15 +162,15 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-              Email atau Nomor WhatsApp
+              Email Akun Pelamar
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <Input
-                type="text"
+                type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="nama@email.com / 08123456789"
+                placeholder="nama@email.com"
                 className="pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 focus:border-sky-500 focus:ring-4 focus:ring-sky-100 shadow-sm transition-all"
                 required
               />
@@ -187,7 +245,7 @@ export default function LoginPage() {
             {isLoading ? (
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Masuk...
+                Memverifikasi Akun...
               </span>
             ) : (
               <span className="flex items-center justify-center gap-2">
@@ -213,21 +271,21 @@ export default function LoginPage() {
         isOpen={forgotModalOpen}
         onClose={() => setForgotModalOpen(false)}
         title="Pemulihan Kata Sandi Pelamar"
-        description="Kami akan mengirimkan instruksi dan tautan verifikasi ke email atau WhatsApp Anda."
+        description="Kami akan mengirimkan instruksi dan tautan verifikasi ke email Anda via Firebase Auth."
       >
         {!recoverySent ? (
           <form onSubmit={handleSendRecovery} className="space-y-4 pt-2">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Alamat Email atau Nomor WhatsApp
+                Alamat Email Terdaftar
               </label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <Input
-                  type="text"
+                  type="email"
                   value={recoveryEmail}
                   onChange={(e) => setRecoveryEmail(e.target.value)}
-                  placeholder="nama@email.com / 08123456789"
+                  placeholder="nama@email.com"
                   className="pl-10 h-11 text-sm rounded-xl border-sky-200 focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                   required
                 />
@@ -247,9 +305,10 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 size="sm"
+                disabled={isRecoveryLoading}
                 className="bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-bold shadow-md shadow-sky-600/20"
               >
-                Kirim Tautan Reset
+                {isRecoveryLoading ? 'Mengirim...' : 'Kirim Tautan Reset'}
               </Button>
             </div>
           </form>
@@ -261,7 +320,7 @@ export default function LoginPage() {
             <div>
               <h4 className="font-bold text-slate-900 text-sm">Tautan Reset Telah Dikirim</h4>
               <p className="text-xs text-slate-500 mt-1 max-w-xs mx-auto leading-relaxed">
-                Jika akun terdaftar dengan <strong className="text-slate-800">{recoveryEmail}</strong>, Anda akan menerima petunjuk pemulihan kata sandi dalam beberapa menit.
+                Jika email <strong className="text-slate-800">{recoveryEmail}</strong> terdaftar, tautan pengaturan ulang kata sandi telah dikirim ke kotak masuk atau folder spam Anda.
               </p>
             </div>
             <Button
