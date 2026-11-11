@@ -70,15 +70,6 @@ export default function LoginPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Kembali ke Beranda</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Belum punya akun?</span>
-          <Link
-            href="/register"
-            className="text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors"
-          >
-            Daftar Sekarang →
-          </Link>
-        </div>
       </header>
 
       {/* Main Form Center (Clean Borderless Minimalist) */}
@@ -162,6 +153,17 @@ export default function LoginPage() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+          </div>
+
+          {/* Register Link placed above Ingat saya */}
+          <div className="flex items-center justify-between text-xs pt-1 pb-0.5">
+            <span className="text-slate-500">Belum punya akun?</span>
+            <Link
+              href="/register"
+              className="font-bold text-sky-600 hover:text-sky-800 transition-colors"
+            >
+              Daftar Sekarang →
+            </Link>
           </div>
 
           <div className="flex items-center justify-between pt-0.5">
