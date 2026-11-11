@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
@@ -118,6 +119,7 @@ export default function ProfileSetupPage() {
     });
 
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const validateStep1 = () => {
@@ -262,6 +264,17 @@ export default function ProfileSetupPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
+      {/* Return to Dashboard */}
+      <div>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 hover:text-sky-900 bg-sky-50 hover:bg-sky-100/80 px-3.5 py-1.5 rounded-xl border border-sky-200 transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>← Kembali ke Dashboard Utama Pelamar</span>
+        </Link>
+      </div>
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-corporate-200/80">
         <div>

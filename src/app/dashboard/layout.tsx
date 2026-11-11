@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/layout/Navbar';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { X } from 'lucide-react';
@@ -10,7 +11,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
+  // If on main dashboard prototype page, render full screen without the old pink template wrapper
+  if (pathname === '/dashboard') {
+    return <>{children}</>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#fafbfe]">

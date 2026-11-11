@@ -114,7 +114,7 @@ export default function LoginPage() {
         }
       }
 
-      router.push('/dashboard/profile');
+      router.push('/dashboard');
     } catch (err: any) {
       console.error('Firebase login error:', err);
       let msg = 'Gagal masuk. Periksa kembali email dan kata sandi Anda.';

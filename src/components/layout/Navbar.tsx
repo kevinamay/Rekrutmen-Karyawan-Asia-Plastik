@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { Badge } from '@/components/ui/badge';
@@ -40,27 +41,32 @@ export function Navbar({ onToggleSidebar }: { onToggleSidebar?: () => void }) {
             </button>
           )}
 
-          <Link href="/dashboard/status" className="flex items-center gap-2.5 group">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blush-500 to-blush-400 text-white shadow-sm shadow-blush-200 transition-transform group-hover:scale-105">
-              <Sparkles className="h-5 w-5" />
-            </div>
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <Image
+              src="/assets/images/logos/logo.webp"
+              alt="CV. Asia Plastik"
+              width={120}
+              height={38}
+              priority
+              className="h-7 w-auto object-contain"
+            />
             <div className="flex flex-col">
-              <span className="font-bold tracking-tight text-corporate-900 text-base leading-tight flex items-center gap-1.5">
-                NexaRecruit <span className="text-blush-500 font-extrabold">AI</span>
+              <span className="font-bold tracking-tight text-slate-900 text-sm leading-tight">
+                CV. Asia Plastik
               </span>
-              <span className="text-[10px] uppercase font-semibold text-corporate-400 tracking-wider">
-                Enterprise Talent Engine
+              <span className="text-[10px] uppercase font-semibold text-sky-600 tracking-wider">
+                Portal Rekrutmen
               </span>
             </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-corporate-200">
-            <Badge variant="blush" className="text-[11px] font-medium py-0.5">
-              <Briefcase className="w-3 h-3 text-blush-500 mr-1" />
-              Req #842: {candidate.appliedRole}
+            <Badge variant="outline" className="text-[11px] font-semibold py-0.5 border-sky-300 text-sky-800 bg-sky-50">
+              <Briefcase className="w-3 h-3 text-sky-600 mr-1" />
+              Posisi: {candidate.appliedRole}
             </Badge>
             <span className="text-xs text-corporate-400">•</span>
-            <span className="text-xs text-corporate-500 font-medium">Department: {candidate.appliedDepartment}</span>
+            <span className="text-xs text-corporate-500 font-medium">Pabrik Sidoarjo</span>
           </div>
         </div>
 

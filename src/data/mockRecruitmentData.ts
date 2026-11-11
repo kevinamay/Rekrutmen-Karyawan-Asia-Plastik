@@ -79,24 +79,24 @@ export const INITIAL_STAGES: StageInfo[] = [
 ];
 
 export const INITIAL_CANDIDATE: Candidate = {
-  id: 'cand_9841_sj',
-  fullName: 'Sarah Jenkins',
-  email: 'sarah.jenkins@devpro.io',
-  phone: '+1 (415) 890-4421',
-  location: 'San Francisco, CA (Remote Eligible)',
-  headline: 'Staff Frontend Engineer & Design Systems Architect',
+  id: 'cand_asp_0891',
+  fullName: 'Kevina Maydiva Heriansaputri',
+  email: 'kevinamay23@gmail.com',
+  phone: '082244109503',
+  location: 'Sidoarjo, Jawa Timur (Pabrik CV. Asia Plastik)',
+  headline: 'Pelamar Calon Supervisor Quality Control (QC)',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
-  linkedinUrl: 'https://linkedin.com/in/sarahjenkins-dev',
-  githubUrl: 'https://github.com/sarah-jenkins',
-  portfolioUrl: 'https://sarahjenkins.design',
+  linkedinUrl: '',
+  githubUrl: '',
+  portfolioUrl: '',
   summary:
-    'Frontend specialist with 7+ years of experience engineering high-scale React & Next.js web applications, crafting modular design systems, and championing web performance and accessibility across distributed squads.',
-  appliedRole: 'Lead Frontend Architect',
-  appliedDepartment: 'Engineering & Product Platform',
-  appliedDate: 'October 28, 2026',
-  currentStage: 'practical-final',
-  overallScore: 93,
-  finalDecision: 'hired',
+    'Kandidat pelamar kerja posisi Supervisor Quality Control (QC) CV. Asia Plastik di Sidoarjo. Memiliki integritas tinggi, dedikasi terhadap standar mutu ISO 9001, dan kepemimpinan operasional.',
+  appliedRole: 'Supervisor Quality Control (QC)',
+  appliedDepartment: 'Quality Assurance & Control',
+  appliedDate: '11 Februari 2027',
+  currentStage: 'profile',
+  overallScore: 88,
+  finalDecision: 'pending',
 };
 
 export const MOCK_PASSED_CV_RESULT: CVScreeningResult = {
