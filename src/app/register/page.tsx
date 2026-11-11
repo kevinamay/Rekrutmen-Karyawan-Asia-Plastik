@@ -81,19 +81,15 @@ export default function RegisterPage() {
       }
 
       // 3. Store candidate document in Firestore database
-      try {
-        await setDoc(doc(db, 'candidates', user.uid), {
-          uid: user.uid,
-          fullName: fullName.trim(),
-          phone: phone.trim(),
-          email: email.trim().toLowerCase(),
-          createdAt: serverTimestamp(),
-          role: 'candidate',
-          applicationStatus: 'registered',
-        });
-      } catch (firestoreErr) {
-        console.warn('Firestore write warning:', firestoreErr);
-      }
+      await setDoc(doc(db, 'candidates', user.uid), {
+        uid: user.uid,
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: email.trim().toLowerCase(),
+        createdAt: serverTimestamp(),
+        role: 'candidate',
+        applicationStatus: 'registered',
+      });
 
       // 4. Update in-app state context
       updateCandidate({
