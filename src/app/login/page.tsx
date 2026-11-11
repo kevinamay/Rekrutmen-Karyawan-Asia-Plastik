@@ -22,8 +22,8 @@ export default function LoginPage() {
   const router = useRouter();
 
   // Form State
-  const [email, setEmail] = useState('pratama.ardiansyah@gmail.com');
-  const [password, setPassword] = useState('AsiaPlastik2026!');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
