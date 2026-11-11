@@ -80,9 +80,9 @@ export default function RegisterPage() {
         console.warn('Update profile error:', profileErr);
       }
 
-      // 3. Store candidate document in Firestore database with timeout safety
+      // 3. Store candidate document in Firestore database
       try {
-        const firestoreWrite = setDoc(doc(db, 'candidates', user.uid), {
+        await setDoc(doc(db, 'candidates', user.uid), {
           uid: user.uid,
           fullName: fullName.trim(),
           phone: phone.trim(),
@@ -91,10 +91,6 @@ export default function RegisterPage() {
           role: 'candidate',
           applicationStatus: 'registered',
         });
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Firestore write timeout')), 6000)
-        );
-        await Promise.race([firestoreWrite, timeoutPromise]);
       } catch (firestoreErr) {
         console.warn('Firestore write warning:', firestoreErr);
       }

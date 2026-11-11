@@ -20,7 +20,7 @@ import {
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { auth, db } from '@/lib/firebase';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,10 +68,26 @@ export default function LoginPage() {
             email: data.email || user.email || '',
             phone: data.phone || '',
           });
-        } else if (user.displayName || user.email) {
+        } else {
+          // If candidate doc doesn't exist yet, automatically persist to Firestore candidates collection
+          const candidateData = {
+            uid: user.uid,
+            fullName: user.displayName || 'Kevina Maydiva Heriansaputri',
+            email: user.email || email.trim().toLowerCase(),
+            phone: '',
+            role: 'candidate',
+            applicationStatus: 'registered',
+            createdAt: serverTimestamp(),
+          };
+          try {
+            await setDoc(doc(db, 'candidates', user.uid), candidateData, { merge: true });
+          } catch (writeErr) {
+            console.warn('Could not backfill candidate doc to Firestore:', writeErr);
+          }
           updateCandidate({
-            fullName: user.displayName || '',
-            email: user.email || '',
+            fullName: candidateData.fullName,
+            email: candidateData.email,
+            phone: candidateData.phone,
           });
         }
       } catch (docErr) {

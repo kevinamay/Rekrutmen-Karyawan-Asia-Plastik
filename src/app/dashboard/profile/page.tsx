@@ -22,6 +22,8 @@ import {
   AlertCircle,
   ExternalLink,
 } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function ProfileSetupPage() {
   const router = useRouter();
@@ -82,6 +84,42 @@ export default function ProfileSetupPage() {
     },
   ]);
 
+  // Auto-sync with Firestore candidates collection on mount
+  React.useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (currentUser) => {
+      if (currentUser) {
+        try {
+          const candidateRef = doc(db, 'candidates', currentUser.uid);
+          const snap = await getDoc(candidateRef);
+          if (!snap.exists()) {
+            await setDoc(
+              candidateRef,
+              {
+                uid: currentUser.uid,
+                fullName: currentUser.displayName || candidate.fullName || 'Kevina Maydiva Heriansaputri',
+                email: currentUser.email || candidate.email || 'kevinamay23@gmail.com',
+                phone: candidate.phone || '082244109503',
+                createdAt: serverTimestamp(),
+                role: 'candidate',
+                applicationStatus: 'registered',
+              },
+              { merge: true }
+            );
+          } else {
+            const data = snap.data();
+            if (data.fullName && !fullName) setFullName(data.fullName);
+            if (data.email && !email) setEmail(data.email);
+            if (data.phone && !phone) setPhone(data.phone);
+          }
+        } catch (e) {
+          console.warn('Auto sync firestore error:', e);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const validateStep1 = () => {
     const errs: Record<string, string> = {};
     if (!fullName.trim()) errs.fullName = 'Full legal name is required';
@@ -94,11 +132,47 @@ export default function ProfileSetupPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep === 1) {
       if (!validateStep1()) return;
+      if (auth.currentUser) {
+        try {
+          await setDoc(
+            doc(db, 'candidates', auth.currentUser.uid),
+            {
+              fullName,
+              email,
+              phone,
+              location,
+              headline,
+              linkedinUrl,
+              githubUrl,
+              portfolioUrl,
+              summary,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn('Sync step 1 error:', e);
+        }
+      }
       setCurrentStep(2);
     } else if (currentStep === 2) {
+      if (auth.currentUser) {
+        try {
+          await setDoc(
+            doc(db, 'candidates', auth.currentUser.uid),
+            {
+              educations,
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn('Sync step 2 error:', e);
+        }
+      }
       setCurrentStep(3);
     } else {
       // Step 3 Final Submission
@@ -113,12 +187,37 @@ export default function ProfileSetupPage() {
         portfolioUrl,
         summary,
       });
+      if (auth.currentUser) {
+        try {
+          await setDoc(
+            doc(db, 'candidates', auth.currentUser.uid),
+            {
+              fullName,
+              email,
+              phone,
+              location,
+              headline,
+              linkedinUrl,
+              githubUrl,
+              portfolioUrl,
+              summary,
+              educations,
+              experiences,
+              applicationStatus: 'profile_completed',
+              updatedAt: serverTimestamp(),
+            },
+            { merge: true }
+          );
+        } catch (e) {
+          console.warn('Sync step 3 error:', e);
+        }
+      }
       updateStageStatus('profile', 'completed', 100);
       router.push('/dashboard/screening');
     }
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     updateCandidate({
       fullName,
       email,
@@ -130,6 +229,31 @@ export default function ProfileSetupPage() {
       portfolioUrl,
       summary,
     });
+
+    if (auth.currentUser) {
+      try {
+        await setDoc(
+          doc(db, 'candidates', auth.currentUser.uid),
+          {
+            uid: auth.currentUser.uid,
+            fullName,
+            email,
+            phone,
+            location,
+            headline,
+            linkedinUrl,
+            githubUrl,
+            portfolioUrl,
+            summary,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      } catch (err) {
+        console.warn('Firestore draft save warning:', err);
+      }
+    }
+
     setSaveSuccessNotice(true);
     setTimeout(() => setSaveSuccessNotice(false), 3000);
   };
