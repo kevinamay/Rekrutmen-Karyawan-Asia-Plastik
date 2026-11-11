@@ -91,15 +91,6 @@ export default function RegisterPage() {
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Kembali ke Beranda</span>
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-slate-400">Sudah punya akun?</span>
-          <Link
-            href="/login"
-            className="text-xs font-bold text-sky-600 hover:text-sky-800 transition-colors"
-          >
-            Masuk →
-          </Link>
-        </div>
       </header>
 
       {/* Main Center (Clean Borderless Minimalist) */}
@@ -243,6 +234,17 @@ export default function RegisterPage() {
             {errors.confirmPassword && (
               <p className="text-xs text-red-500 mt-1">{errors.confirmPassword}</p>
             )}
+          </div>
+
+          {/* Login Link placed above terms checkbox */}
+          <div className="flex items-center justify-between text-xs pt-1 pb-0.5">
+            <span className="text-slate-500">Sudah punya akun?</span>
+            <Link
+              href="/login"
+              className="font-bold text-sky-600 hover:text-sky-800 transition-colors"
+            >
+              Masuk →
+            </Link>
           </div>
 
           <div className="pt-1">
