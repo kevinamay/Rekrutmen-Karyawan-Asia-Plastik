@@ -40,9 +40,9 @@ export const INITIAL_STAGES: StageInfo[] = [
   },
   {
     id: 'competency-test',
-    title: 'Online Competency Test',
-    shortTitle: 'Technical Quiz',
-    description: 'Timed assessment on Next.js, TypeScript, & Architecture',
+    title: 'Ujian Kompetensi Teknis QC',
+    shortTitle: 'Tes Kompetensi',
+    description: 'Uji kompetensi mutu manufaktur plastik, ISO 9001:2015, dan K3',
     route: '/dashboard/competency-test',
     status: 'passed',
     score: 92,

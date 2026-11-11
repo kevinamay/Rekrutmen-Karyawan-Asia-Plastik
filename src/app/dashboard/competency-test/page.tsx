@@ -2,366 +2,677 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useRecruitment } from '@/context/RecruitmentContext';
-import { MOCK_COMPETENCY_QUESTIONS } from '@/data/mockRecruitmentData';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Modal } from '@/components/ui/modal';
-import { formatTimeRemaining } from '@/lib/utils';
 import {
+  LayoutDashboard,
+  User,
+  FileText,
+  ClipboardCheck,
+  Clock,
+  LogOut,
+  Phone,
+  Menu,
+  X,
+  ArrowLeft,
   Timer,
   CheckCircle2,
   AlertCircle,
-  Flag,
-  ArrowRight,
-  ArrowLeft,
-  Sparkles,
-  HelpCircle,
-  Code2,
-  Check,
   Send,
-  Zap,
+  HelpCircle,
+  ShieldCheck,
+  Check,
+  Award,
+  ArrowUp,
+  Info,
 } from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useRecruitment } from '@/context/RecruitmentContext';
+import { QC_COMPETENCY_QUESTIONS } from './mockQuestions';
 
 export default function CompetencyTestPage() {
   const router = useRouter();
-  const {
-    competencyAnswers,
-    competencyFlagged,
-    setCompetencyAnswer,
-    toggleFlagQuestion,
-    submitCompetencyTest,
-  } = useRecruitment();
+  const { candidate, updateCandidate, submitCompetencyTest } = useRecruitment();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [secondsRemaining, setSecondsRemaining] = useState(1480); // ~24:40 mins
-  const [submitModalOpen, setSubmitModalOpen] = useState(false);
-  const [testSubmitted, setTestSubmitted] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [candidateName, setCandidateName] = useState(
+    candidate.fullName || 'Kevina Maydiva Heriansaputri'
+  );
+  const [candidateEmail, setCandidateEmail] = useState(
+    candidate.email || 'kevinamay23@gmail.com'
+  );
 
-  const questions = MOCK_COMPETENCY_QUESTIONS;
-  const currentQuestion = questions[currentIndex];
-  const selectedOption = competencyAnswers[currentQuestion.id];
-  const isFlagged = competencyFlagged.includes(currentQuestion.id);
+  // Exam Answers State
+  const [answers, setAnswers] = useState<Record<number, string>>({
+    1: 'A',
+    2: 'A',
+    3: 'A',
+  });
+  const [secondsRemaining, setSecondsRemaining] = useState(1449); // ~24:09 mins
+  const [submitted, setSubmitted] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const answeredCount = Object.keys(competencyAnswers).length;
-  const totalCount = questions.length;
-  const progressPct = Math.round((answeredCount / totalCount) * 100);
-
-  // Countdown timer effect
+  // Sync Auth and Firestore Profile
   useEffect(() => {
-    if (testSubmitted) return;
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        if (user.displayName) setCandidateName(user.displayName);
+        if (user.email) setCandidateEmail(user.email);
+
+        try {
+          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.fullName) setCandidateName(data.fullName);
+            if (data.email) setCandidateEmail(data.email);
+            updateCandidate({
+              fullName: data.fullName || user.displayName || candidateName,
+              email: data.email || user.email || candidateEmail,
+              phone: data.phone || candidate.phone,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching candidate data:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [candidate.phone, candidateEmail, candidateName, updateCandidate]);
+
+  // Countdown Timer
+  useEffect(() => {
+    if (submitted) return;
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [testSubmitted]);
+  }, [submitted]);
 
-  const handleSelectOption = (optionId: string) => {
-    setCompetencyAnswer(currentQuestion.id, optionId);
+  const questions = QC_COMPETENCY_QUESTIONS;
+  const answeredCount = Object.keys(answers).length;
+  const totalQuestions = questions.length;
+  const progressPct = Math.round((answeredCount / totalQuestions) * 100);
+
+  const formatTimer = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = secs % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleConfirmSubmit = () => {
+  const handleSelectOption = (qId: number, optId: string) => {
+    if (submitted) return;
+    setAnswers((prev) => ({ ...prev, [qId]: optId }));
+  };
+
+  const scrollToQuestion = (id: number) => {
+    const el = document.getElementById(`soal-${id}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleFinalSubmit = () => {
+    setShowConfirmModal(false);
+    setSubmitted(true);
     submitCompetencyTest();
-    setTestSubmitted(true);
-    setSubmitModalOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      {/* Top Test Banner & Distraction-Free Header */}
-      <div className="rounded-2xl bg-white border border-corporate-200/80 p-4 sm:p-5 shadow-subtle flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3 w-full sm:w-auto">
-          <div className="w-10 h-10 rounded-xl bg-blush-50 text-blush-600 flex items-center justify-center shrink-0">
-            <Zap className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-corporate-900">
-                Senior Technical Competency Assessment
-              </span>
-              <Badge variant="blush" className="text-[10px]">
-                Stage 4 of 7
-              </Badge>
+    <div className="min-h-screen flex bg-slate-100/70 font-sans text-slate-800">
+      {/* Mobile Drawer Backdrop */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Left Sleek Navy Sidebar (Consistent with Desain 2) */}
+      <aside
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800 transition-transform duration-300 md:translate-x-0 ${
+          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } h-screen`}
+      >
+        <div>
+          {/* Brand header */}
+          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            <div>
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src="/assets/images/logos/logo.webp"
+                  alt="CV. Asia Plastik"
+                  width={130}
+                  height={42}
+                  priority
+                  className="h-8 w-auto object-contain brightness-0 invert"
+                />
+              </Link>
+              <p className="text-[10px] text-sky-400 font-semibold tracking-wider uppercase mt-2">
+                Portal Karir Karyawan
+              </p>
             </div>
-            <p className="text-xs text-corporate-500 mt-0.5">
-              Next.js 14/15, TypeScript & Enterprise Architecture • Single Choice
-            </p>
-          </div>
-        </div>
-
-        {/* Live Countdown Timer & Submit Trigger */}
-        <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
-          <div
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl border font-mono text-xs font-bold ${
-              secondsRemaining < 300
-                ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
-                : 'bg-corporate-50 text-corporate-700 border-corporate-200'
-            }`}
-          >
-            <Timer className="w-4 h-4 text-blush-500" />
-            <span>Time Left: {formatTimeRemaining(secondsRemaining)}</span>
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          <Button
-            size="sm"
-            onClick={() => setSubmitModalOpen(true)}
-            className="text-xs font-semibold shadow-blush gap-1.5"
-          >
-            <Send className="w-3.5 h-3.5" />
-            Finish & Submit
-          </Button>
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1">
+            <Link
+              href="/dashboard"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span>Beranda Pelamar</span>
+            </Link>
+
+            <Link
+              href="/dashboard/profile"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <User className="w-4 h-4" />
+              <span>Biodata Diri</span>
+            </Link>
+
+            <Link
+              href="/dashboard/screening"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <FileText className="w-4 h-4" />
+              <span>Berkas & CV</span>
+            </Link>
+
+            <Link
+              href="/dashboard/competency-test"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white shadow-sm"
+            >
+              <ClipboardCheck className="w-4 h-4 text-sky-200" />
+              <span>Tes Kompetensi</span>
+            </Link>
+
+            <Link
+              href="/dashboard/status"
+              onClick={() => setMobileMenuOpen(false)}
+              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
+            >
+              <Clock className="w-4 h-4" />
+              <span>Status Lamaran</span>
+            </Link>
+          </nav>
         </div>
-      </div>
 
-      {/* Progress & Question Palette Bar */}
-      <div className="rounded-2xl bg-white border border-corporate-200/80 p-4 shadow-subtle space-y-3">
-        <div className="flex items-center justify-between text-xs font-semibold text-corporate-600">
-          <span>
-            Question {currentIndex + 1} of {totalCount} ({answeredCount} answered)
-          </span>
-          <span className="text-blush-600 font-bold">{progressPct}% Complete</span>
-        </div>
-        <Progress value={progressPct} />
-
-        {/* Question Selector Pills */}
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {questions.map((q, idx) => {
-            const hasAnswer = !!competencyAnswers[q.id];
-            const isQFlagged = competencyFlagged.includes(q.id);
-            const isCurrent = idx === currentIndex;
-
-            return (
-              <button
-                key={q.id}
-                onClick={() => setCurrentIndex(idx)}
-                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all relative flex items-center justify-center ${
-                  isCurrent
-                    ? 'bg-blush-600 text-white shadow-sm ring-2 ring-blush-300'
-                    : hasAnswer
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-300'
-                    : 'bg-corporate-50 text-corporate-600 hover:bg-corporate-100 border border-corporate-200'
-                }`}
-              >
-                {idx + 1}
-                {isQFlagged && (
-                  <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-500 rounded-full ring-1 ring-white" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Main Question Display Card */}
-      {!testSubmitted ? (
-        <Card className="border border-corporate-200/80 shadow-card">
-          <CardContent className="p-6 sm:p-8 space-y-6">
-            {/* Question Category & Flag */}
-            <div className="flex items-center justify-between">
-              <Badge variant="pastel" className="text-xs font-semibold">
-                Category: {currentQuestion.category}
-              </Badge>
-
-              <button
-                type="button"
-                onClick={() => toggleFlagQuestion(currentQuestion.id)}
-                className={`flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
-                  isFlagged
-                    ? 'bg-amber-50 text-amber-700 border-amber-300'
-                    : 'text-corporate-500 hover:text-corporate-800 border-transparent hover:bg-corporate-50'
-                }`}
-              >
-                <Flag className={`w-3.5 h-3.5 ${isFlagged ? 'fill-amber-500 text-amber-500' : ''}`} />
-                <span>{isFlagged ? 'Flagged for Review' : 'Flag Question'}</span>
-              </button>
+        {/* Sidebar Footer User Info */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              {candidateName ? candidateName.charAt(0).toUpperCase() : 'A'}
             </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold text-white block truncate">{candidateName}</span>
+              <span className="text-[10px] text-slate-400 block truncate">{candidateEmail}</span>
+            </div>
+          </div>
 
-            {/* Question Text */}
-            <h2 className="text-base sm:text-lg font-bold text-corporate-900 leading-snug">
-              {currentIndex + 1}. {currentQuestion.question}
-            </h2>
+          <button
+            onClick={handleSignOut}
+            className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Akun</span>
+          </button>
+        </div>
+      </aside>
 
-            {/* Optional Code Snippet */}
-            {currentQuestion.codeSnippet && (
-              <div className="rounded-xl bg-corporate-900 text-corporate-100 p-4 font-mono text-xs overflow-x-auto border border-corporate-800">
-                <div className="flex items-center gap-2 pb-2 mb-2 border-b border-corporate-800 text-corporate-400 text-[11px]">
-                  <Code2 className="w-3.5 h-3.5 text-blush-400" />
-                  <span>TypeScript Snippet</span>
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top Header */}
+        <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 text-xs">
+              <Link
+                href="/dashboard"
+                className="text-slate-400 hover:text-sky-600 flex items-center gap-1"
+              >
+                <ArrowLeft className="w-3 h-3" />
+                <span className="hidden sm:inline">Kembali</span>
+              </Link>
+              <span className="text-slate-300">/</span>
+              <span className="text-slate-500 hidden sm:inline">Portal Rekrutmen</span>
+              <span className="text-slate-300 hidden sm:inline">/</span>
+              <span className="font-bold text-slate-900">Ujian Kompetensi Teknis</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <span className="text-xs bg-sky-50 text-sky-800 font-semibold px-2.5 py-1 rounded-full border border-sky-200 hidden sm:inline-flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-sky-600 animate-pulse" />
+              <span>Tahap 4: Ujian Kompetensi QC</span>
+            </span>
+            <a
+              href="https://wa.me/6282244109503"
+              target="_blank"
+              rel="noreferrer"
+              className="text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+            >
+              <Phone className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Bantuan HRD</span>
+              <span className="sm:hidden">HRD</span>
+            </a>
+          </div>
+        </header>
+
+        {/* Viewport Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-32">
+          <div className="max-w-7xl mx-auto space-y-6">
+            {/* Sticky Exam Progress Bar */}
+            <div className="sticky top-20 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200/90 shadow-md flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 text-sky-400 flex items-center justify-center font-bold text-sm shadow-inner">
+                  <FileText className="w-5 h-5" />
                 </div>
-                <pre>{currentQuestion.codeSnippet}</pre>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-900">
+                      Lembar Ujian Teknis Terbuka (Continuous Sheet)
+                    </h2>
+                    <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                      {answeredCount} / {totalQuestions} Terjawab ({progressPct}%)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500">
+                    Semua butir soal ditampilkan berurutan. Klik nomor untuk navigasi instan.
+                  </p>
+                </div>
               </div>
-            )}
 
-            {/* Multiple Choice Radio Options */}
-            <div className="space-y-3 pt-2">
-              {currentQuestion.options.map((option) => {
-                const isSelected = selectedOption === option.id;
+              {/* Question Jump Chips, Countdown Timer & Submit Button */}
+              <div className="flex items-center gap-3">
+                <div className="hidden md:flex items-center gap-1.5 bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+                  {questions.map((q) => {
+                    const isAnswered = !!answers[q.id];
+                    return (
+                      <button
+                        key={q.id}
+                        onClick={() => scrollToQuestion(q.id)}
+                        className={`w-7 h-7 rounded-lg text-xs font-bold transition-all flex items-center justify-center ${
+                          isAnswered
+                            ? 'bg-emerald-600 text-white shadow-sm'
+                            : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'
+                        }`}
+                        title={`Soal #${q.id}: ${isAnswered ? 'Sudah dijawab' : 'Belum dijawab'}`}
+                      >
+                        {q.id}
+                      </button>
+                    );
+                  })}
+                </div>
 
-                return (
-                  <div
-                    key={option.id}
-                    onClick={() => handleSelectOption(option.id)}
-                    className={`cursor-pointer rounded-xl p-4 border text-xs sm:text-sm transition-all duration-200 flex items-start gap-3.5 ${
-                      isSelected
-                        ? 'border-blush-500 bg-blush-50/70 text-corporate-900 font-medium ring-1 ring-blush-300 shadow-sm'
-                        : 'border-corporate-200/90 bg-white hover:border-corporate-300 hover:bg-corporate-50/60 text-corporate-700'
-                    }`}
-                  >
-                    {/* Accessible Radio Indicator */}
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-950 text-white font-mono text-sm font-bold shadow-sm">
+                  <Timer className="w-4 h-4 text-sky-400 animate-pulse" />
+                  <span>{formatTimer(secondsRemaining)}</span>
+                </div>
+
+                <button
+                  onClick={() => setShowConfirmModal(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-sm transition-all active:scale-[0.98]"
+                >
+                  <Send className="w-3.5 h-3.5" />
+                  <span>Selesai & Kumpulkan</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Main Continuous Document Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+              {/* Left Column: All Questions (3 cols) */}
+              <div className="lg:col-span-3 space-y-6">
+                {/* Instructions Box */}
+                <div className="bg-gradient-to-r from-sky-50 via-slate-50 to-white p-5 rounded-2xl border border-sky-100 text-xs text-slate-700 flex items-start gap-3 shadow-sm">
+                  <Info className="w-5 h-5 text-sky-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <span className="font-bold text-slate-900 block text-sm">
+                      Petunjuk Pengerjaan Lembar Ujian Teknis QC
+                    </span>
+                    <p className="text-slate-600 leading-relaxed">
+                      Pilihlah salah satu jawaban yang paling tepat untuk masing-masing butir soal di
+                      bawah ini. Anda dapat mengubah jawaban sewaktu-waktu selama sisa waktu ujian
+                      masih tersedia. Setelah seluruh butir soal terjawab, klik tombol{' '}
+                      <strong>&quot;Selesai & Kumpulkan&quot;</strong> di bagian bawah atau panel atas.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Question List */}
+                {questions.map((q, idx) => {
+                  const isAnswered = !!answers[q.id];
+                  const currentSelected = answers[q.id];
+
+                  return (
                     <div
-                      className={`w-5 h-5 rounded-full border shrink-0 mt-0.5 flex items-center justify-center transition-colors ${
-                        isSelected
-                          ? 'border-blush-600 bg-blush-600 text-white'
-                          : 'border-corporate-300 bg-white'
-                      }`}
+                      key={q.id}
+                      id={`soal-${q.id}`}
+                      className="bg-white rounded-2xl border border-slate-200/90 shadow-sm p-6 space-y-5 transition-all hover:border-slate-300"
                     >
-                      {isSelected && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                    </div>
+                      {/* Question Header */}
+                      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-7 h-7 rounded-lg bg-slate-900 text-white font-bold text-xs flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="text-xs font-semibold text-sky-700 bg-sky-50 px-2.5 py-0.5 rounded-full border border-sky-200">
+                            {q.category}
+                          </span>
+                        </div>
+                        <div>
+                          {isAnswered ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                              <Check className="w-3 h-3" />
+                              Terjawab ({currentSelected})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                              <AlertCircle className="w-3 h-3" />
+                              Belum Dijawab
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="flex-1 leading-relaxed">
-                      <span className="font-bold text-corporate-900 mr-2">[{option.id}]</span>
-                      {option.text}
+                      {/* Question Text */}
+                      <h3 className="text-sm md:text-base font-semibold text-slate-900 leading-relaxed">
+                        {q.question}
+                      </h3>
+
+                      {/* Option Cards */}
+                      <div className="space-y-2.5 pt-1">
+                        {q.options.map((opt) => {
+                          const isChecked = currentSelected === opt.id;
+                          return (
+                            <button
+                              key={opt.id}
+                              type="button"
+                              onClick={() => handleSelectOption(q.id, opt.id)}
+                              className={`w-full text-left p-4 rounded-xl border transition-all flex items-start gap-3.5 ${
+                                isChecked
+                                  ? 'bg-sky-50/70 border-sky-500 shadow-sm ring-1 ring-sky-500/20'
+                                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/60'
+                              }`}
+                            >
+                              <span
+                                className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center shrink-0 mt-0.5 transition-all ${
+                                  isChecked
+                                    ? 'bg-sky-600 text-white shadow-sm'
+                                    : 'bg-slate-100 text-slate-700 border border-slate-300'
+                                }`}
+                              >
+                                {opt.id}
+                              </span>
+                              <span
+                                className={`text-xs md:text-sm leading-relaxed ${
+                                  isChecked ? 'font-semibold text-slate-900' : 'text-slate-700'
+                                }`}
+                              >
+                                {opt.text}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Bottom Action Footer */}
+                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">
+                        {answeredCount} dari {totalQuestions} Soal Telah Terisi
+                      </p>
+                      <p className="text-[11px] text-slate-500">
+                        Pastikan semua butir jawaban telah terisi sesuai standar teknis operasional.
+                      </p>
                     </div>
                   </div>
-                );
-              })}
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={scrollToTop}
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all"
+                    >
+                      <ArrowUp className="w-3.5 h-3.5" />
+                      <span>Kembali ke Atas</span>
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmModal(true)}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-sm transition-all"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Kumpulkan Lembar Jawaban</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Sticky Summary & Candidate Dossier (1 col) */}
+              <div className="space-y-6 lg:sticky lg:top-40">
+                {/* Candidate Badge */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                  <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
+                    <div className="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                      {candidateName ? candidateName.charAt(0).toUpperCase() : 'K'}
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-slate-900">{candidateName}</h4>
+                      <p className="text-[11px] text-slate-500">ID: CAND-QC-2027-0891</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-xs">
+                    <div className="flex justify-between text-slate-500">
+                      <span>Posisi:</span>
+                      <span className="font-semibold text-slate-900 text-right">Supervisor QC</span>
+                    </div>
+                    <div className="flex justify-between text-slate-500">
+                      <span>Lokasi Ujian:</span>
+                      <span className="font-semibold text-slate-900 text-right">
+                        Online Portal Asia Plastik
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-slate-500">
+                      <span>Batas Waktu:</span>
+                      <span className="font-semibold text-slate-900">30 Menit</span>
+                    </div>
+                    <div className="flex justify-between text-slate-500">
+                      <span>Passing Grade:</span>
+                      <span className="font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px]">
+                        Minimal 80%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Quick Navigator Grid */}
+                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+                  <h4 className="text-xs font-bold text-slate-900">Daftar Status Soal</h4>
+                  <div className="grid grid-cols-5 gap-2">
+                    {questions.map((q) => {
+                      const isAnswered = !!answers[q.id];
+                      return (
+                        <button
+                          key={q.id}
+                          onClick={() => scrollToQuestion(q.id)}
+                          className={`h-9 rounded-xl text-xs font-bold flex flex-col items-center justify-center transition-all ${
+                            isAnswered
+                              ? 'bg-emerald-600 text-white shadow-sm ring-1 ring-emerald-600'
+                              : 'bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span>{q.id}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 space-y-1.5 text-[11px] text-slate-500">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded bg-emerald-600 inline-block" />
+                      <span>Hijau: Soal sudah terjawab ({answeredCount})</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded bg-slate-200 inline-block" />
+                      <span>Abu-abu: Soal belum terjawab ({totalQuestions - answeredCount})</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center mx-auto">
+              <Send className="w-6 h-6" />
             </div>
 
-            {/* Pagination Controls */}
-            <div className="flex items-center justify-between pt-6 border-t border-corporate-100">
-              <Button
-                variant="outline"
-                size="md"
-                disabled={currentIndex === 0}
-                onClick={() => setCurrentIndex((prev) => Math.max(0, prev - 1))}
-                className="gap-2 text-xs font-semibold"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" /> Previous
-              </Button>
-
-              {currentIndex < totalCount - 1 ? (
-                <Button
-                  size="md"
-                  onClick={() => setCurrentIndex((prev) => Math.min(totalCount - 1, prev + 1))}
-                  className="gap-2 text-xs font-semibold shadow-blush"
-                >
-                  Next Question <ArrowRight className="w-3.5 h-3.5" />
-                </Button>
-              ) : (
-                <Button
-                  size="md"
-                  onClick={() => setSubmitModalOpen(true)}
-                  className="gap-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
-                >
-                  Review & Final Submit <Check className="w-4 h-4" />
-                </Button>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        /* Test Completed Success Screen */
-        <Card className="border-emerald-200 bg-white shadow-card animate-in fade-in">
-          <CardContent className="p-8 sm:p-10 text-center space-y-6">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center shadow-sm">
-              <CheckCircle2 className="w-9 h-9" />
-            </div>
-
-            <div className="space-y-2">
-              <Badge variant="success" className="text-xs uppercase font-bold tracking-wider">
-                Competency Test Passed (Score: 92%)
-              </Badge>
-              <h2 className="text-2xl font-bold text-corporate-900">
-                Technical Assessment Successfully Submitted!
-              </h2>
-              <p className="text-xs sm:text-sm text-corporate-500 max-w-md mx-auto">
-                You demonstrated advanced proficiency in Next.js Server Components, bundle optimization,
-                and enterprise state management.
+            <div className="text-center space-y-2">
+              <h3 className="text-base font-bold text-slate-900">
+                Konfirmasi Pengumpulan Lembar Ujian
+              </h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Anda telah menjawab{' '}
+                <strong className="text-slate-800">
+                  {answeredCount} dari {totalQuestions} butir soal
+                </strong>
+                . Apakah Anda yakin ingin menyelesaikan dan mengunci lembar jawaban ini?
               </p>
             </div>
 
-            <div className="max-w-md mx-auto p-4 rounded-xl bg-corporate-50 border border-corporate-100 flex items-center justify-around text-xs">
-              <div>
-                <span className="text-corporate-400 block text-[11px]">Correct Answers</span>
-                <span className="text-lg font-bold text-emerald-600">6 / 6 (100%)</span>
+            <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs space-y-1.5">
+              <div className="flex justify-between text-slate-600">
+                <span>Sisa Waktu:</span>
+                <span className="font-mono font-bold text-slate-900">
+                  {formatTimer(secondsRemaining)}
+                </span>
               </div>
-              <div className="w-px h-8 bg-corporate-200" />
-              <div>
-                <span className="text-corporate-400 block text-[11px]">Time Spent</span>
-                <span className="text-lg font-bold text-corporate-800">5m 20s</span>
-              </div>
-              <div className="w-px h-8 bg-corporate-200" />
-              <div>
-                <span className="text-corporate-400 block text-[11px]">Percentile</span>
-                <span className="text-lg font-bold text-blush-600">Top 5%</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Status Jawaban:</span>
+                <span className="font-bold text-emerald-600">
+                  {answeredCount === totalQuestions
+                    ? 'Lengkap 100%'
+                    : `${totalQuestions - answeredCount} belum diisi`}
+                </span>
               </div>
             </div>
 
-            <div className="pt-2">
-              <Link href="/dashboard/ai-interview">
-                <Button size="lg" className="gap-2 text-sm font-semibold shadow-blush">
-                  Advance to Stage 5: AI HR Interview Room <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
+            <div className="flex items-center gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowConfirmModal(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all"
+              >
+                Periksa Kembali
+              </button>
+              <button
+                type="button"
+                onClick={handleFinalSubmit}
+                className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold shadow-sm transition-all"
+              >
+                Ya, Kumpulkan
+              </button>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Confirmation Modal before Submit */}
-      <Modal
-        isOpen={submitModalOpen}
-        onClose={() => setSubmitModalOpen(false)}
-        title="Submit Technical Assessment?"
-        description="Verify your answers before submitting your assessment for automated scoring."
-      >
-        <div className="space-y-4 py-2">
-          <div className="p-3.5 rounded-xl bg-blush-50/60 border border-blush-200/80 text-xs text-corporate-700 space-y-1.5">
-            <div className="flex justify-between font-semibold">
-              <span>Total Questions:</span>
-              <span>{totalCount}</span>
-            </div>
-            <div className="flex justify-between font-semibold text-emerald-700">
-              <span>Answered:</span>
-              <span>{answeredCount}</span>
-            </div>
-            {competencyFlagged.length > 0 && (
-              <div className="flex justify-between font-semibold text-amber-700">
-                <span>Flagged for Review:</span>
-                <span>{competencyFlagged.length}</span>
-              </div>
-            )}
-          </div>
-
-          <p className="text-xs text-corporate-500">
-            Once submitted, your score will be logged in your candidate record and you will proceed
-            directly to the AI HR Interview Room.
-          </p>
-
-          <div className="flex items-center justify-end gap-2 pt-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setSubmitModalOpen(false)}
-            >
-              Back to Review
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleConfirmSubmit}
-              className="font-semibold shadow-blush"
-            >
-              Confirm & Submit Test
-            </Button>
           </div>
         </div>
-      </Modal>
+      )}
+
+      {/* Submitted Success Screen */}
+      {submitted && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-8 shadow-2xl border border-slate-200 text-center space-y-5 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-3xl bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto shadow-inner">
+              <Award className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+                Ujian Berhasil Dikumpulkan
+              </span>
+              <h3 className="text-lg font-bold text-slate-900">
+                Lembar Jawaban Kompetensi QC Diterima
+              </h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Terima kasih, <strong>{candidateName}</strong>. Lembar jawaban Anda telah tersimpan
+                di database rekrutmen CV. Asia Plastik. Tim Penguji Teknis Pabrik akan memverifikasi
+                evaluasi mutu Anda.
+              </p>
+            </div>
+
+            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-left text-xs space-y-2">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Nomor Registrasi Ujian:</span>
+                <span className="font-mono font-bold text-slate-800">QC-EXAM-20270891-FIN</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Jumlah Soal Terjawab:</span>
+                <span className="font-bold text-emerald-600">
+                  {answeredCount} dari {totalQuestions} Soal
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Tahap Berikutnya:</span>
+                <span className="font-bold text-sky-700">Wawancara Teknis Tim Pabrik</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+              <button
+                onClick={() => setSubmitted(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold transition-all"
+              >
+                Lihat Lembar Jawaban (Mode Tinjau)
+              </button>
+              <Link
+                href="/dashboard"
+                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold shadow-sm transition-all text-center flex items-center justify-center"
+              >
+                Kembali ke Beranda Pelamar
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
-
