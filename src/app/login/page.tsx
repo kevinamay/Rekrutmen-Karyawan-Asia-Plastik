@@ -165,7 +165,7 @@ export default function LoginPage() {
               Email Akun Pelamar
             </label>
             <div className="relative">
-              <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
               <Input
                 type="email"
                 value={email}
@@ -195,7 +195,7 @@ export default function LoginPage() {
               </button>
             </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -207,7 +207,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-10 text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -280,7 +280,7 @@ export default function LoginPage() {
                 Alamat Email Terdaftar
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
                 <Input
                   type="email"
                   value={recoveryEmail}

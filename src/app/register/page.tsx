@@ -167,7 +167,7 @@ export default function RegisterPage() {
               Nama Lengkap (Sesuai KTP) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <User className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
               <Input
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
@@ -186,7 +186,7 @@ export default function RegisterPage() {
                 Nomor WhatsApp <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <Phone className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Phone className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
                 <Input
                   type="tel"
                   value={phone}
@@ -205,7 +205,7 @@ export default function RegisterPage() {
                 Email Aktif <span className="text-red-500">*</span>
               </label>
               <div className="relative">
-                <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <Mail className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
                 <Input
                   type="email"
                   value={email}
@@ -232,7 +232,7 @@ export default function RegisterPage() {
               )}
             </div>
             <div className="relative">
-              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
@@ -245,7 +245,7 @@ export default function RegisterPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 z-10 text-slate-400 hover:text-slate-600 transition-colors"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -266,7 +266,7 @@ export default function RegisterPage() {
               Konfirmasi Kata Sandi <span className="text-red-500">*</span>
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Lock className="w-4 h-4 text-sky-500 absolute left-3.5 top-1/2 -translate-y-1/2 z-10 pointer-events-none" />
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
