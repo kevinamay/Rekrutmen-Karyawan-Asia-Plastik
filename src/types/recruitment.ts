@@ -3,6 +3,9 @@ export type ApplicationStageId =
   | 'profile'
   | 'cv-screening'
   | 'competency-test'
+  | 'interview'
+  | 'mcu'
+  | 'offering'
   | 'ai-interview'
   | 'psychology-test'
   | 'practical-final';

@@ -25,12 +25,13 @@ import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useRecruitment } from '@/context/RecruitmentContext';
+import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { candidate, updateCandidate } = useRecruitment();
+  const { openMobileSidebar } = useDashboardLayout();
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
@@ -177,11 +178,6 @@ export default function ProfilePage() {
     }, 5000);
   };
 
-  const handleSignOut = async () => {
-    await signOut(auth);
-    router.push('/login');
-  };
-
   const stepTitles = [
     { num: 1, title: 'Identitas KTP', desc: 'NIK & Data Diri' },
     { num: 2, title: 'Kontak & Domisili', desc: 'No. WhatsApp & Alamat' },
@@ -190,134 +186,21 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="min-h-screen flex bg-slate-100/70 font-sans text-slate-800">
-      {/* Mobile Drawer Backdrop */}
-      {mobileMenuOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"
-          onClick={() => setMobileMenuOpen(false)}
-        />
-      )}
-
-      {/* Left Sleek Navy Sidebar (Consistent with Desain 2) */}
-      <aside
-        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800 transition-transform duration-300 md:translate-x-0 ${
-          mobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-        } h-screen`}
-      >
-        <div>
-          {/* Brand header */}
-          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
-            <div>
-              <Link href="/" className="flex items-center gap-2">
-                <Image
-                  src="/assets/images/logos/logo.webp"
-                  alt="CV. Asia Plastik"
-                  width={130}
-                  height={42}
-                  priority
-                  className="h-8 w-auto object-contain brightness-0 invert"
-                />
-              </Link>
-              <p className="text-[10px] text-sky-400 font-semibold tracking-wider uppercase mt-2">
-                Portal Karir Karyawan
-              </p>
-            </div>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="md:hidden text-slate-400 hover:text-white p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Navigation Links */}
-          <nav className="p-3 space-y-1">
-            <Link
-              href="/dashboard"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
-            >
-              <LayoutDashboard className="w-4 h-4" />
-              <span>Beranda Pelamar</span>
-            </Link>
-
-            <Link
-              href="/dashboard/profile"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold bg-sky-600 text-white shadow-sm"
-            >
-              <User className="w-4 h-4 text-sky-200" />
-              <span>Biodata Diri</span>
-            </Link>
-
-            <Link
-              href="/dashboard/screening"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
-            >
-              <FileText className="w-4 h-4" />
-              <span>Berkas & CV</span>
-            </Link>
-
-            <Link
-              href="/dashboard/competency-test"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
-            >
-              <ClipboardCheck className="w-4 h-4" />
-              <span>Tes Kompetensi</span>
-            </Link>
-
-            <Link
-              href="/dashboard/status"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
-            >
-              <Clock className="w-4 h-4" />
-              <span>Status Lamaran</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Footer User Info */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
-              {formData.fullName ? formData.fullName.charAt(0).toUpperCase() : 'K'}
-            </div>
-            <div className="min-w-0 flex-1">
-              <span className="text-xs font-bold text-white block truncate">{formData.fullName}</span>
-              <span className="text-[10px] text-slate-400 block truncate">{formData.email}</span>
-            </div>
-          </div>
-
+    <>
+      {/* Top Navbar */}
+      <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleSignOut}
-            className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+            onClick={openMobileSidebar}
+            className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
           >
-            <LogOut className="w-3.5 h-3.5" />
-            <span>Keluar Akun</span>
+            <Menu className="w-5 h-5" />
           </button>
-        </div>
-      </aside>
-
-      {/* Main Workspace Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
-        <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
-            <div className="flex items-center gap-2 text-xs">
-              <Link href="/dashboard" className="text-slate-400 hover:text-sky-600 flex items-center gap-1">
-                <ArrowLeft className="w-3 h-3" />
-                <span className="hidden sm:inline">Kembali</span>
-              </Link>
+          <div className="flex items-center gap-2 text-xs">
+            <Link href="/dashboard" className="text-slate-400 hover:text-sky-600 flex items-center gap-1">
+              <ArrowLeft className="w-3 h-3" />
+              <span className="hidden sm:inline">Kembali</span>
+            </Link>
               <span className="text-slate-300">/</span>
               <span className="text-slate-500 hidden sm:inline">Portal Rekrutmen</span>
               <span className="text-slate-300 hidden sm:inline">/</span>
@@ -763,7 +646,6 @@ export default function ProfilePage() {
             </div>
           )}
         </main>
-      </div>
-    </div>
+    </>
   );
 }

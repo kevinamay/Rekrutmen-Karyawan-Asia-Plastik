@@ -1,0 +1,191 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  User,
+  FileText,
+  ClipboardCheck,
+  Clock,
+  LogOut,
+  X,
+} from 'lucide-react';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { useRecruitment } from '@/context/RecruitmentContext';
+
+interface DashboardSidebarProps {
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
+}
+
+export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebarProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { candidate, updateCandidate } = useRecruitment();
+
+  const [candidateName, setCandidateName] = useState(
+    candidate.fullName || 'Kevina Maydiva Heriansaputri'
+  );
+  const [candidateEmail, setCandidateEmail] = useState(
+    candidate.email || 'kevinamay23@gmail.com'
+  );
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        if (user.displayName) setCandidateName(user.displayName);
+        if (user.email) setCandidateEmail(user.email);
+
+        try {
+          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.fullName) setCandidateName(data.fullName);
+            if (data.email) setCandidateEmail(data.email);
+            updateCandidate({
+              fullName: data.fullName || user.displayName || candidateName,
+              email: data.email || user.email || candidateEmail,
+              phone: data.phone || candidate.phone,
+            });
+          }
+        } catch (err) {
+          console.error('Error fetching candidate in sidebar:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [candidate.phone, candidateEmail, candidateName, updateCandidate]);
+
+  const handleSignOut = async () => {
+    await signOut(auth);
+    router.push('/login');
+  };
+
+  const navLinks = [
+    {
+      name: 'Beranda Pelamar',
+      href: '/dashboard',
+      icon: LayoutDashboard,
+      active: pathname === '/dashboard',
+    },
+    {
+      name: 'Biodata Diri',
+      href: '/dashboard/profile',
+      icon: User,
+      active: pathname === '/dashboard/profile',
+    },
+    {
+      name: 'Berkas & CV',
+      href: '/dashboard/screening',
+      icon: FileText,
+      active: pathname === '/dashboard/screening',
+    },
+    {
+      name: 'Tes Kompetensi',
+      href: '/dashboard/competency-test',
+      icon: ClipboardCheck,
+      active: pathname === '/dashboard/competency-test',
+    },
+    {
+      name: 'Status Lamaran',
+      href: '/dashboard/status',
+      icon: Clock,
+      active: pathname === '/dashboard/status',
+    },
+  ];
+
+  return (
+    <>
+      {/* Mobile Drawer Backdrop */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      {/* Sleek Dark Navy Sidebar */}
+      <aside
+        className={`fixed md:sticky top-0 inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 border-r border-slate-800 transition-transform duration-300 md:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+        } h-screen`}
+      >
+        <div>
+          {/* Brand header */}
+          <div className="p-5 border-b border-slate-800 bg-slate-950/40 flex items-center justify-between">
+            <div>
+              <Link href="/" className="flex items-center gap-2">
+                <Image
+                  src="/assets/images/logos/logo.webp"
+                  alt="CV. Asia Plastik"
+                  width={130}
+                  height={42}
+                  priority
+                  className="h-8 w-auto object-contain brightness-0 invert"
+                />
+              </Link>
+              <p className="text-[10px] text-sky-400 font-semibold tracking-wider uppercase mt-2">
+                Portal Karir Karyawan
+              </p>
+            </div>
+            <button
+              onClick={onCloseMobile}
+              className="md:hidden text-slate-400 hover:text-white p-1"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="p-3 space-y-1">
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={onCloseMobile}
+                  className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-colors ${
+                    link.active
+                      ? 'font-bold bg-sky-600 text-white shadow-sm'
+                      : 'font-medium text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${link.active ? 'text-sky-200' : ''}`} />
+                  <span>{link.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Sidebar Footer User Info */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-sky-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
+              {candidateName ? candidateName.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <div className="min-w-0 flex-1">
+              <span className="text-xs font-bold text-white block truncate">{candidateName}</span>
+              <span className="text-[10px] text-slate-400 block truncate">{candidateEmail}</span>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSignOut}
+            className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold flex items-center justify-center gap-1.5 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Keluar Akun</span>
+          </button>
+        </div>
+      </aside>
+    </>
+  );
+}
