@@ -14,8 +14,8 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // If on main dashboard prototype page, render full screen without the old pink template wrapper
-  if (pathname === '/dashboard') {
+  // If on main dashboard or profile page, render full screen without the old pink template wrapper
+  if (pathname === '/dashboard' || pathname === '/dashboard/profile') {
     return <>{children}</>;
   }
 
