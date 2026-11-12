@@ -30,7 +30,12 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useRecruitment, UploadedDocItem, DEFAULT_REQUIRED_DOCS } from '@/context/RecruitmentContext';
+import {
+  useRecruitment,
+  UploadedDocItem,
+  DEFAULT_REQUIRED_DOCS,
+  isCandidateProfileComplete,
+} from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 
 const DOCS_STORAGE_KEY = 'asiaplastik_uploaded_docs';
@@ -268,7 +273,23 @@ export default function CVScreeningPage() {
 
   const uploadedCount = docList.filter((d) => Boolean(d.fileName)).length;
 
-  const isUnlocked = isDocsUnlocked || isProfileCompleted;
+  let actuallyCompletedProfile = Boolean(isProfileCompleted);
+  if (typeof window !== 'undefined') {
+    const savedProf = localStorage.getItem('asiaplastik_profile_data');
+    const savedDone = localStorage.getItem('asiaplastik_profile_completed');
+    if (savedProf) {
+      try {
+        const parsed = JSON.parse(savedProf);
+        actuallyCompletedProfile = Boolean(savedDone === 'true' && isCandidateProfileComplete(parsed));
+      } catch (e) {
+        actuallyCompletedProfile = false;
+      }
+    } else {
+      actuallyCompletedProfile = false;
+    }
+  }
+
+  const isUnlocked = actuallyCompletedProfile;
 
   if (!isUnlocked) {
     return (

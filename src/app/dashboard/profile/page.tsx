@@ -20,11 +20,13 @@ import {
   Save,
   ShieldCheck,
   Sparkles,
+  AlertCircle,
+  Lock,
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { useRecruitment } from '@/context/RecruitmentContext';
+import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 
 const PROFILE_STORAGE_KEY = 'asiaplastik_profile_data';
@@ -37,6 +39,7 @@ export default function ProfilePage() {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveNotice, setSaveNotice] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [candidateUid, setCandidateUid] = useState<string | null>(null);
 
   // Form State initialized clean without hardcoded dummy data
@@ -143,16 +146,93 @@ export default function ProfilePage() {
     const updated = { ...formData, [e.target.name]: e.target.value };
     setFormData(updated);
     setSaveNotice(null);
+    setErrorMessage(null);
     try {
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(updated));
     } catch (e) {}
   };
 
-  const persistToFirestore = async () => {
+  const validateStep = (step: number): string | null => {
+    if (step === 1) {
+      if (!formData.nik || formData.nik.trim().length < 16) {
+        return 'Nomor Induk Kependudukan (NIK) wajib 16 digit angka sesuai e-KTP.';
+      }
+      if (!formData.fullName || formData.fullName.trim().length === 0) {
+        return 'Nama lengkap sesuai KTP wajib diisi.';
+      }
+      if (!formData.dob || formData.dob.trim().length === 0) {
+        return 'Tanggal lahir wajib diisi.';
+      }
+      if (!formData.pob || formData.pob.trim().length === 0) {
+        return 'Tempat / kota kelahiran wajib diisi.';
+      }
+    } else if (step === 2) {
+      if (!formData.phone || formData.phone.trim().length < 9) {
+        return 'Nomor WhatsApp aktif wajib diisi.';
+      }
+      if (!formData.ktpAddress || formData.ktpAddress.trim().length < 5) {
+        return 'Alamat KTP lengkap wajib diisi (Jalan, RT/RW, Kelurahan, Kecamatan, Kota).';
+      }
+      if (!formData.emergencyName || formData.emergencyName.trim().length === 0) {
+        return 'Nama kontak darurat keluarga wajib diisi.';
+      }
+      if (!formData.emergencyPhone || formData.emergencyPhone.trim().length < 8) {
+        return 'Nomor telepon kontak darurat wajib diisi.';
+      }
+    } else if (step === 3) {
+      if (!formData.schoolName || formData.schoolName.trim().length === 0) {
+        return 'Nama universitas / institusi pendidikan terakhir wajib diisi.';
+      }
+      if (!formData.major || formData.major.trim().length === 0) {
+        return 'Program studi / jurusan wajib diisi.';
+      }
+      if (!formData.gradYear || formData.gradYear.trim().length === 0) {
+        return 'Tahun kelulusan wajib diisi.';
+      }
+    } else if (step === 4) {
+      if (!formData.expectedSalary || formData.expectedSalary.trim().length === 0) {
+        return 'Ekspektasi gaji bulanan wajib diisi.';
+      }
+    }
+    return null;
+  };
+
+  const persistDraft = async () => {
     setIsSaving(true);
     try {
       localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(formData));
-      saveProfileData(formData);
+      saveProfileData(formData, false);
+
+      if (candidateUid) {
+        await setDoc(
+          doc(db, 'candidates', candidateUid),
+          {
+            ...formData,
+            profileCompleted: false,
+            updatedAt: serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+      updateCandidate({
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        nik: formData.nik,
+      });
+    } catch (err) {
+      console.error('Error saving profile draft:', err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const persistCompleted = async () => {
+    setIsSaving(true);
+    try {
+      localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(formData));
+      localStorage.setItem('asiaplastik_profile_completed', 'true');
+      saveProfileData(formData, true);
 
       if (candidateUid) {
         await setDoc(
@@ -169,16 +249,24 @@ export default function ProfilePage() {
         fullName: formData.fullName,
         email: formData.email,
         phone: formData.phone,
+        nik: formData.nik,
       });
     } catch (err) {
-      console.error('Error saving to Firestore:', err);
+      console.error('Error saving completed profile:', err);
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleNext = async () => {
-    await persistToFirestore();
+    const error = validateStep(currentStep);
+    if (error) {
+      setErrorMessage(error);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setErrorMessage(null);
+    await persistDraft();
     if (currentStep < 4) {
       setCurrentStep(currentStep + 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -186,6 +274,7 @@ export default function ProfilePage() {
   };
 
   const handlePrev = () => {
+    setErrorMessage(null);
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -194,11 +283,18 @@ export default function ProfilePage() {
 
   const handleFinish = async (e: React.FormEvent) => {
     e.preventDefault();
-    await persistToFirestore();
-    setSaveNotice('Seluruh formulir biodata Anda berhasil disimpan ke sistem rekrutmen CV. Asia Plastik.');
-    setTimeout(() => {
-      setSaveNotice(null);
-    }, 6000);
+    for (let s = 1; s <= 4; s++) {
+      const err = validateStep(s);
+      if (err) {
+        setErrorMessage(err);
+        setCurrentStep(s);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return;
+      }
+    }
+    setErrorMessage(null);
+    await persistCompleted();
+    setSaveNotice('Seluruh formulir biodata Anda berhasil diverifikasi & disimpan lengkap! Tahap 3 (Berkas & CV) kini telah dibuka.');
   };
 
   const stepTitles = [
@@ -284,7 +380,20 @@ export default function ProfilePage() {
               {stepTitles.map((s) => (
                 <button
                   key={s.num}
-                  onClick={() => setCurrentStep(s.num)}
+                  onClick={() => {
+                    if (s.num < currentStep) {
+                      setErrorMessage(null);
+                      setCurrentStep(s.num);
+                    } else if (s.num > currentStep) {
+                      const err = validateStep(currentStep);
+                      if (err) {
+                        setErrorMessage(err);
+                        return;
+                      }
+                      setErrorMessage(null);
+                      setCurrentStep(s.num);
+                    }
+                  }}
                   className="flex flex-col items-center group focus:outline-none"
                 >
                   <div
@@ -312,11 +421,28 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Success Notification */}
+        {/* Error Notification */}
+        {errorMessage && (
+          <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in shadow-sm">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
+        {/* Success Notification with CTA to Stage 3 */}
         {saveNotice && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2.5 animate-in fade-in shadow-sm">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>{saveNotice}</span>
+          <div className="p-5 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950 text-xs sm:text-sm font-semibold flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+              <span>{saveNotice}</span>
+            </div>
+            <Link
+              href="/dashboard/screening"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all hover:scale-[1.02] shrink-0 self-start sm:self-center"
+            >
+              <span>Lanjut ke Tahap 3 (Berkas & CV)</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         )}
 

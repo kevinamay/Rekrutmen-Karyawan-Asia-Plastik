@@ -19,7 +19,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { useRecruitment } from '@/context/RecruitmentContext';
+import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 
 interface DashboardSidebarProps {
   mobileOpen: boolean;
@@ -89,6 +89,22 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
     router.push('/login');
   };
 
+  let actuallyProfileDone = Boolean(isProfileCompleted);
+  if (typeof window !== 'undefined') {
+    const savedProf = localStorage.getItem('asiaplastik_profile_data');
+    const savedDone = localStorage.getItem('asiaplastik_profile_completed');
+    if (savedProf) {
+      try {
+        const parsed = JSON.parse(savedProf);
+        actuallyProfileDone = Boolean(savedDone === 'true' && isCandidateProfileComplete(parsed));
+      } catch (e) {
+        actuallyProfileDone = false;
+      }
+    } else {
+      actuallyProfileDone = false;
+    }
+  }
+
   const navLinks = [
     {
       name: 'Beranda Pelamar',
@@ -105,26 +121,26 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       icon: User,
       active: pathname === '/dashboard/profile',
       locked: false,
-      completed: isProfileCompleted,
-      badge: isProfileCompleted ? 'Selesai' : 'Tahap 2',
+      completed: actuallyProfileDone,
+      badge: actuallyProfileDone ? null : 'Tahap 2',
     },
     {
       name: 'Berkas & CV',
       href: '/dashboard/screening',
       icon: FileText,
       active: pathname === '/dashboard/screening',
-      locked: !isDocsUnlocked,
-      completed: isDocsCompleted,
-      badge: !isDocsUnlocked ? 'Terkunci' : isDocsCompleted ? 'Lengkap' : 'Tahap 3',
+      locked: !actuallyProfileDone,
+      completed: actuallyProfileDone && isDocsCompleted,
+      badge: !actuallyProfileDone ? 'Terkunci' : (actuallyProfileDone && isDocsCompleted) ? null : 'Tahap 3',
     },
     {
       name: 'Psikotes Online',
       href: '/dashboard/competency-test',
       icon: ClipboardCheck,
       active: pathname === '/dashboard/competency-test',
-      locked: !isPsychologyUnlocked,
+      locked: !(actuallyProfileDone && isDocsCompleted),
       completed: isPsychologyCompleted && Boolean(psychologyPassed),
-      badge: !isPsychologyUnlocked ? 'Terkunci' : (isPsychologyCompleted && Boolean(psychologyPassed)) ? 'Lulus' : 'Tahap 4',
+      badge: !(actuallyProfileDone && isDocsCompleted) ? 'Terkunci' : (isPsychologyCompleted && Boolean(psychologyPassed)) ? null : 'Tahap 4',
     },
     {
       name: 'Tes Keahlian Teknis',
@@ -133,7 +149,7 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       active: pathname === '/dashboard/skill-test',
       locked: !isSkillTestUnlocked,
       completed: isSkillTestCompleted && Boolean(competencyPassed),
-      badge: !isSkillTestUnlocked ? 'Terkunci' : (isSkillTestCompleted && Boolean(competencyPassed)) ? 'Lulus' : 'Tahap 5',
+      badge: !isSkillTestUnlocked ? 'Terkunci' : (isSkillTestCompleted && Boolean(competencyPassed)) ? null : 'Tahap 5',
     },
     {
       name: 'Status Lamaran',

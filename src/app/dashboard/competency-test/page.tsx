@@ -44,7 +44,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useRecruitment } from '@/context/RecruitmentContext';
+import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 import {
   COGNITIVE_QUESTIONS,
@@ -416,7 +416,22 @@ export default function PsychologyTestPage() {
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
 
-  const profileIsDone = isProfileCompleted || (typeof window !== 'undefined' && Boolean(localStorage.getItem('asiaplastik_profile_data')));
+  let profileIsDone = Boolean(isProfileCompleted);
+  if (typeof window !== 'undefined') {
+    const savedProf = localStorage.getItem('asiaplastik_profile_data');
+    const savedDone = localStorage.getItem('asiaplastik_profile_completed');
+    if (savedProf) {
+      try {
+        const parsed = JSON.parse(savedProf);
+        profileIsDone = Boolean(savedDone === 'true' && isCandidateProfileComplete(parsed));
+      } catch (e) {
+        profileIsDone = false;
+      }
+    } else {
+      profileIsDone = false;
+    }
+  }
+
   const docsAreDone = isDocsCompleted || (requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length);
 
   // Prerequisite Gates: Only active if test hasn't been completed yet

@@ -85,6 +85,30 @@ export const DEFAULT_REQUIRED_DOCS: UploadedDocItem[] = [
   },
 ];
 
+export function isCandidateProfileComplete(data: any): boolean {
+  if (!data) return false;
+  const nikStr = (data.nik || '').toString().trim();
+  const hasStep1 =
+    nikStr.length >= 16 &&
+    Boolean(data.fullName && data.fullName.trim().length > 0) &&
+    Boolean(data.dob && data.dob.trim().length > 0);
+
+  const hasStep2 =
+    Boolean(data.phone && data.phone.trim().length > 0) &&
+    Boolean(data.ktpAddress && data.ktpAddress.trim().length > 0) &&
+    Boolean(data.emergencyName && data.emergencyName.trim().length > 0) &&
+    Boolean(data.emergencyPhone && data.emergencyPhone.trim().length > 0);
+
+  const hasStep3 =
+    Boolean(data.schoolName && data.schoolName.trim().length > 0) &&
+    Boolean(data.major && data.major.trim().length > 0) &&
+    Boolean(data.gradYear && data.gradYear.trim().length > 0);
+
+  const hasStep4 = Boolean(data.expectedSalary && data.expectedSalary.trim().length > 0);
+
+  return Boolean(hasStep1 && hasStep2 && hasStep3 && hasStep4);
+}
+
 interface RecruitmentContextType {
   candidate: Candidate;
   stages: StageInfo[];
@@ -113,7 +137,7 @@ interface RecruitmentContextType {
   // Actions
   updateCandidate: (data: Partial<Candidate>) => void;
   setUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDocItem[]>>;
-  saveProfileData: (data: any) => void;
+  saveProfileData: (data: any, markAsComplete?: boolean) => void;
   saveCompetencyResult: (answers: Record<number, string>, score: number, passed: boolean) => void;
   updateStageStatus: (stageId: ApplicationStageId, status: StageInfo['status'], score?: number) => void;
   resetAllData: () => void;
@@ -174,11 +198,14 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
 
       // Check specific storage keys
       const savedProfile = localStorage.getItem('asiaplastik_profile_data');
+      const savedCompleted = localStorage.getItem('asiaplastik_profile_completed');
       if (savedProfile) {
         const p = JSON.parse(savedProfile);
-        if (p.nik && p.fullName) {
-          setProfileCompleted(true);
-        }
+        const isValid = isCandidateProfileComplete(p);
+        const isDone = Boolean(savedCompleted === 'true' && isValid);
+        setProfileCompleted(isDone);
+      } else {
+        setProfileCompleted(false);
       }
 
       const savedDocs = localStorage.getItem('asiaplastik_uploaded_docs');
@@ -220,7 +247,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
           const userDoc = await getDoc(doc(db, 'candidates', user.uid));
           if (userDoc.exists()) {
             const data = userDoc.data();
-            if (data.profileCompleted !== undefined) setProfileCompleted(Boolean(data.profileCompleted));
+            const valid = isCandidateProfileComplete(data);
+            const isDone = Boolean(data.profileCompleted && valid);
+            setProfileCompleted(isDone);
             if (data.uploadedDocs && Array.isArray(data.uploadedDocs)) setUploadedDocs(data.uploadedDocs);
             if (data.psychologyScore !== undefined) {
               setPsychologyScore(data.psychologyScore);
@@ -272,7 +301,7 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
   };
 
   // Helper flags for prerequisite checks
-  const isProfileCompleted = profileCompleted || Boolean(candidate.nik);
+  const isProfileCompleted = Boolean(profileCompleted);
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
   const isDocsCompleted = requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length;
@@ -345,8 +374,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     });
   };
 
-  const saveProfileData = (data: any) => {
-    setProfileCompleted(true);
+  const saveProfileData = (data: any, markAsComplete = false) => {
+    const isComplete = Boolean(markAsComplete && isCandidateProfileComplete(data));
+    setProfileCompleted(isComplete);
     if (data.fullName || data.phone || data.email || data.nik) {
       updateCandidate({
         fullName: data.fullName || candidate.fullName,
@@ -355,7 +385,14 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         nik: data.nik || candidate.nik,
       });
     }
-    persistState({ profileCompleted: true });
+    try {
+      if (isComplete) {
+        localStorage.setItem('asiaplastik_profile_completed', 'true');
+      } else {
+        localStorage.removeItem('asiaplastik_profile_completed');
+      }
+    } catch (e) {}
+    persistState({ profileCompleted: isComplete });
   };
 
   const savePsychologyResult = (score: number, passed: boolean) => {

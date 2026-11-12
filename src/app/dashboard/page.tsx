@@ -25,7 +25,7 @@ import {
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { useRecruitment } from '@/context/RecruitmentContext';
+import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 import { JobOpening, JOB_VACANCIES } from '@/data/jobVacancies';
 
@@ -131,7 +131,23 @@ export default function DashboardPage() {
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
   const docsDone = isDocsCompleted || (requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length);
-  const profileDone = isProfileCompleted || profileCompleted;
+
+  let profileDone = Boolean(isProfileCompleted || profileCompleted);
+  if (typeof window !== 'undefined') {
+    const savedProf = localStorage.getItem('asiaplastik_profile_data');
+    const savedDone = localStorage.getItem('asiaplastik_profile_completed');
+    if (savedProf) {
+      try {
+        const parsed = JSON.parse(savedProf);
+        profileDone = Boolean(savedDone === 'true' && isCandidateProfileComplete(parsed));
+      } catch (e) {
+        profileDone = false;
+      }
+    } else {
+      profileDone = false;
+    }
+  }
+
   const psychoDone = Boolean(psychologyScore !== null && psychologyPassed);
   const skillDone = Boolean(competencyScore !== null && competencyPassed);
 
