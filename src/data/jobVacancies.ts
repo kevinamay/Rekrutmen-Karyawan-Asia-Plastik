@@ -204,3 +204,4 @@ export const JOB_VACANCIES: JobOpening[] = [
     ],
   },
 ];
+

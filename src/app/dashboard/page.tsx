@@ -48,19 +48,42 @@ export default function DashboardPage() {
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [appliedNotice, setAppliedNotice] = useState<string | null>(null);
 
-  // Candidate Data State
+  // Candidate Data State: strictly empty by default until user chooses a vacancy
   const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
   const [candidateEmail, setCandidateEmail] = useState(candidate.email || '');
   const [candidatePhone, setCandidatePhone] = useState(candidate.phone || '');
   const [candidateUid, setCandidateUid] = useState<string | null>(null);
-  const [currentAppliedRole, setCurrentAppliedRole] = useState<string>(candidate.appliedRole || '');
+  const [currentAppliedRole, setCurrentAppliedRole] = useState<string>('');
+
+  // Clear legacy mock appliedRole from localStorage if present
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const saved = localStorage.getItem('asiaplastik_recruitment_v1');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed.candidate?.appliedRole === 'Supervisor Quality Control (QC)' && !parsed.candidate?.manuallySelected) {
+            parsed.candidate.appliedRole = '';
+            parsed.candidate.appliedDepartment = '';
+            localStorage.setItem('asiaplastik_recruitment_v1', JSON.stringify(parsed));
+            setCurrentAppliedRole('');
+            updateCandidate({ appliedRole: '', appliedDepartment: '' });
+          } else if (parsed.candidate?.appliedRole && parsed.candidate?.manuallySelected) {
+            setCurrentAppliedRole(parsed.candidate.appliedRole);
+          }
+        }
+      } catch (e) {}
+    }
+  }, [updateCandidate]);
 
   // Sync with context
   useEffect(() => {
     if (candidate.fullName) setCandidateName(candidate.fullName);
     if (candidate.email) setCandidateEmail(candidate.email);
     if (candidate.phone) setCandidatePhone(candidate.phone);
-    if (candidate.appliedRole) setCurrentAppliedRole(candidate.appliedRole);
+    if (candidate.appliedRole && candidate.appliedRole !== 'Supervisor Quality Control (QC)') {
+      setCurrentAppliedRole(candidate.appliedRole);
+    }
   }, [candidate.fullName, candidate.email, candidate.phone, candidate.appliedRole]);
 
   // Sync with Firebase Auth and Firestore document
@@ -83,13 +106,13 @@ export default function DashboardPage() {
             setCandidateName(realName);
             setCandidateEmail(realEmail);
             setCandidatePhone(realPhone);
-            if (role) setCurrentAppliedRole(role);
+            setCurrentAppliedRole(role);
 
             updateCandidate({
               fullName: realName,
               email: realEmail,
               phone: realPhone,
-              appliedRole: role || candidate.appliedRole,
+              appliedRole: role,
             });
           }
         } catch (err) {
@@ -99,7 +122,7 @@ export default function DashboardPage() {
     });
 
     return () => unsubscribe();
-  }, [updateCandidate, candidate.appliedRole]);
+  }, [updateCandidate]);
 
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
