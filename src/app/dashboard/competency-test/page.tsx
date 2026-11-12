@@ -24,6 +24,22 @@ import {
   RotateCcw,
   Check,
   Table,
+  Target,
+  FileCheck2,
+  Flame,
+  Gauge,
+  ListChecks,
+  MonitorCheck,
+  Cpu,
+  ChevronLeft,
+  UserCheck,
+  Compass,
+  BookOpen,
+  ChevronDown,
+  ChevronUp,
+  Lightbulb,
+  PlayCircle,
+  Info,
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -73,13 +89,13 @@ export default function PsychologyTestPage() {
   const [isTestStarted, setIsTestStarted] = useState<boolean>(false);
   const [testFinished, setTestFinished] = useState<boolean>(false);
 
-  // Subtest 1 (Kognitif) Answers: { [questionId]: 'A' | 'B' | ... }
+  // Subtest 1 (Kognitif) Answers
   const [cognitiveAnswers, setCognitiveAnswers] = useState<Record<number, string>>({});
 
-  // Subtest 2 (Kepribadian) Answers: { [setId]: { most: 'A', least: 'B' } }
+  // Subtest 2 (Kepribadian) Answers
   const [personalityAnswers, setPersonalityAnswers] = useState<Record<number, { most?: string; least?: string }>>({});
 
-  // Subtest 3 (SJT) Answers: { [scenarioId]: 'A' | 'B' | ... }
+  // Subtest 3 (SJT) Answers
   const [sjtAnswers, setSjtAnswers] = useState<Record<number, string>>({});
 
   // Subtest 4 (Kraepelin) Dynamic Pairs & Answers
@@ -88,7 +104,7 @@ export default function PsychologyTestPage() {
   const [kraepelinCorrect, setKraepelinCorrect] = useState<number>(0);
   const [kraepelinTotalAnswered, setKraepelinTotalAnswered] = useState<number>(0);
 
-  // Subtest 5 (Logika Algoritma) Answers: { [questionId]: 'A' | 'B' | ... }
+  // Subtest 5 (Logika Algoritma) Answers
   const [logicAnswers, setLogicAnswers] = useState<Record<number, string>>({});
 
   // Final Composite Score State
@@ -103,6 +119,76 @@ export default function PsychologyTestPage() {
     kraepelinTotal: number;
     kraepelinAccuracy: number;
   } | null>(null);
+
+  // Guidelines Accordion & Practice States (Pre-test Launchpad)
+  const [expandedGuides, setExpandedGuides] = useState<Record<number, boolean>>({ 1: true });
+  const [allExpanded, setAllExpanded] = useState<boolean>(false);
+  const [hasAgreedToRules, setHasAgreedToRules] = useState<boolean>(true);
+
+  // Subtest 1 (Cognitive) Practice Question State
+  const [practiceCogAnswer, setPracticeCogAnswer] = useState<string | null>(null);
+
+  // Subtest 2 (Personality) Practice Selection State
+  const [practicePersMost, setPracticePersMost] = useState<string | null>(null);
+  const [practicePersLeast, setPracticePersLeast] = useState<string | null>(null);
+
+  // Subtest 3 (SJT) Practice Question State
+  const [practiceSjtAnswer, setPracticeSjtAnswer] = useState<string | null>(null);
+
+  // Subtest 4 (Kraepelin Digital) Mini Drill State
+  const [kraepelinDrill, setKraepelinDrill] = useState<{
+    n1: number;
+    n2: number;
+    feedback: string | null;
+    correctCount: number;
+  }>({
+    n1: 7,
+    n2: 8,
+    feedback: null,
+    correctCount: 0,
+  });
+
+  // Subtest 5 (Logic Algorithm) Practice Question State
+  const [practiceLogicAnswer, setPracticeLogicAnswer] = useState<string | null>(null);
+
+  const toggleGuide = (subtestNum: number) => {
+    setExpandedGuides((prev) => ({
+      ...prev,
+      [subtestNum]: !prev[subtestNum],
+    }));
+  };
+
+  const toggleAllGuides = () => {
+    const next = !allExpanded;
+    setAllExpanded(next);
+    setExpandedGuides({
+      1: next,
+      2: next,
+      3: next,
+      4: next,
+      5: next,
+    });
+  };
+
+  const handleKraepelinDrillInput = (digit: number) => {
+    const sum = kraepelinDrill.n1 + kraepelinDrill.n2;
+    const unitDigit = sum % 10;
+    if (digit === unitDigit) {
+      const nextN1 = Math.floor(Math.random() * 9) + 1;
+      const nextN2 = Math.floor(Math.random() * 9) + 1;
+      setKraepelinDrill({
+        n1: nextN1,
+        n2: nextN2,
+        feedback: `Hebat! ${kraepelinDrill.n1} + ${kraepelinDrill.n2} = ${sum} (Digit Satuan: ${digit}). Jawaban Anda Benar! Coba pasangan angka baru.`,
+        correctCount: kraepelinDrill.correctCount + 1,
+      });
+    } else {
+      setKraepelinDrill((prev) => ({
+        ...prev,
+        feedback: `Kurang tepat. ${prev.n1} + ${prev.n2} = ${sum}, digit satuannya adalah ${unitDigit} (bukan ${digit}). Ingat hanya ambil angka belakangnya!`,
+      }));
+    }
+  };
 
   // Sync candidate profile & check prior test results
   useEffect(() => {
@@ -177,13 +263,12 @@ export default function PsychologyTestPage() {
     SJT_QUESTIONS.forEach((q) => {
       const chosenId = sjtAnswers[q.id];
       const opt = q.options.find((o) => o.id === chosenId);
-      sjtTotalPoints += opt ? opt.score : 2; // default neutral if unanswered
+      sjtTotalPoints += opt ? opt.score : 2;
     });
     const sjtScore = Math.round((sjtTotalPoints / (SJT_QUESTIONS.length * 4)) * 100);
 
     // 4. Kraepelin (90 Detik: Akurasi & Kecepatan)
     const accuracy = kraepelinTotalAnswered > 0 ? Math.round((kraepelinCorrect / kraepelinTotalAnswered) * 100) : 0;
-    // Speed score benchmark: 35 answers in 90 seconds = 100%
     const speedScore = Math.min(Math.round((kraepelinTotalAnswered / 35) * 100), 100);
     const kraepScore = Math.round((accuracy * 0.6) + (speedScore * 0.4));
 
@@ -256,7 +341,6 @@ export default function PsychologyTestPage() {
       setCurrentSubtest(nextIdx);
       setSecondsRemaining(SUBTEST_DURATIONS[nextIdx]);
     } else {
-      // Completed last subtest -> calculate score
       calculateFinalScores();
     }
   }, [currentSubtest, calculateFinalScores]);
@@ -268,7 +352,6 @@ export default function PsychologyTestPage() {
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => {
         if (prev <= 1) {
-          // Time expired! Auto-submit this subtest immediately
           advanceToNextSubtest();
           return 0;
         }
@@ -286,7 +369,7 @@ export default function PsychologyTestPage() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  // Kraepelin Answer Handler (Single Unit Digit)
+  // Kraepelin Answer Handler
   const handleKraepelinInput = (unitDigit: number) => {
     if (kraepelinIndex >= kraepelinPairs.length) return;
     const currentPair = kraepelinPairs[kraepelinIndex];
@@ -299,7 +382,7 @@ export default function PsychologyTestPage() {
     setKraepelinIndex((prev) => prev + 1);
   };
 
-  // Physical Keyboard Listener for Kraepelin
+  // Keyboard Listener for Kraepelin
   useEffect(() => {
     if (!isTestStarted || testFinished || currentSubtest !== 3) return;
 
@@ -322,7 +405,7 @@ export default function PsychologyTestPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800">
+    <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800 pb-20">
       {/* Top Navbar */}
       <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
         <div className="flex items-center gap-3">
@@ -359,122 +442,774 @@ export default function PsychologyTestPage() {
         </div>
       </header>
 
-      {/* Main Body */}
-      <main className="p-4 sm:p-6 lg:p-8 max-w-5xl w-full mx-auto space-y-6">
+      {/* Main Container */}
+      <main className="p-4 sm:p-6 lg:p-8 max-w-6xl w-full mx-auto space-y-6">
         {/* ========================================================
-            CASE 1: SCREEN SEBELUM MULAI (PETUNJUK RESMI PSIKOTES)
+            CASE 1: ROADMAP STEPPER UTAMA - PANDUAN LENGKAP & CONTOH SOAL
+            (Desain Terpilih - Fixed Launchpad Pelamar)
             ======================================================== */}
         {!isTestStarted && !testFinished && (
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-sm space-y-8">
-            <div className="text-center max-w-2xl mx-auto space-y-3">
-              <div className="w-16 h-16 rounded-3xl bg-gradient-to-tr from-sky-600 to-blue-500 text-white flex items-center justify-center mx-auto shadow-lg shadow-sky-500/25">
-                <Brain className="w-8 h-8" />
-              </div>
-              <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200">
-                Tahap 4 Seleksi Rekrutmen
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                Psikotes & Asesmen Potensi Kerja Online
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Asesmen psikometrik resmi CV. Asia Plastik untuk mengukur kemampuan kognitif, gaya kepribadian kerja, pertimbangan situasional, ketelitian tempo Kraepelin, dan logika sistem.
-              </p>
-            </div>
-
-            {/* Subtests Overview Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-700 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                    Sub-tes 1
+          <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-sm space-y-8 animate-in fade-in duration-300">
+            {/* Header Brief & Overview */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-6">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 inline-block">
+                    Tahap 4 Seleksi Resmi
                   </span>
-                  <span className="text-xs font-semibold text-slate-500">12 Menit</span>
+                  <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
+                    Standar SHL & Nasional
+                  </span>
                 </div>
-                <h4 className="font-bold text-sm text-slate-900">Tes Kemampuan Kognitif (Aptitude)</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Logika Numerik (deret & aritmatika), Logika Verbal (silogisme & analogi), dan Logika Spasial visual 3D.
+                <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                  Roadmap Asesmen Psikotes Terpadu
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-500">
+                  Pelamar: <strong className="text-slate-800">{candidateName}</strong> • Posisi: <strong className="text-slate-800">{candidateRole}</strong>
                 </p>
               </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-700 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                    Sub-tes 2
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">10 Menit</span>
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+                <div className="px-4 py-2 rounded-2xl bg-slate-900 text-white text-center">
+                  <span className="block text-[10px] text-slate-400">Total Durasi</span>
+                  <strong className="text-base font-bold text-sky-400">41 Menit</strong>
                 </div>
-                <h4 className="font-bold text-sm text-slate-900">Tes Kepribadian (Personality)</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Format Forced-Choice: Memilih opsi yang <strong>Paling Menggambarkan (Most)</strong> dan <strong>Paling Tidak (Least)</strong> diri Anda di tempat kerja.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-700 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                    Sub-tes 3
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">10 Menit</span>
+                <div className="px-4 py-2 rounded-2xl bg-sky-50 border border-sky-200 text-center">
+                  <span className="block text-[10px] text-sky-600">Ambang Kelulusan</span>
+                  <strong className="text-base font-bold text-sky-900">75%</strong>
                 </div>
-                <h4 className="font-bold text-sm text-slate-900">Situational Judgment Test (SJT)</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Menilai respons etika kerja, integritas, dan profesionalitas dalam menghadapi dilema operasional pabrik.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-700 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                    Sub-tes 4
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">90 Detik</span>
-                </div>
-                <h4 className="font-bold text-sm text-slate-900">Ketelitian Kraepelin Digital</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Tes koran interaktif: menjumlahkan angka beruntun secepat mungkin untuk menguji fokus, tempo, dan ketahanan di bawah tekanan.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2 md:col-span-2 lg:col-span-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-sky-700 bg-white px-2.5 py-0.5 rounded-md border border-slate-200">
-                    Sub-tes 5
-                  </span>
-                  <span className="text-xs font-semibold text-slate-500">8 Menit</span>
-                </div>
-                <h4 className="font-bold text-sm text-slate-900">Logika Algoritma & Alur Sistem Kerja</h4>
-                <p className="text-[11px] text-slate-500 leading-relaxed">
-                  Analisis flowchart percabangan kondisi mesin, optimasi antrian SPT, dan penyelesaian masalah akar penyebab (5-Why Root Cause).
-                </p>
               </div>
             </div>
 
-            {/* Critical Rules Notice */}
-            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-950 text-xs space-y-2">
+            {/* Quick Action Bar for Guides */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs">
+              <div className="flex items-center gap-2 text-slate-700">
+                <BookOpen className="w-4 h-4 text-sky-600 shrink-0" />
+                <span>
+                  <strong>Petunjuk & Contoh Soal:</strong> Pelajari tata cara pengerjaan dan coba simulasi contoh soal di bawah ini sebelum memulai tes resmi.
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={toggleAllGuides}
+                className="px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-sky-700 hover:border-sky-300 font-bold text-[11px] transition-all shrink-0 flex items-center gap-1.5 shadow-sm cursor-pointer"
+              >
+                <span>{allExpanded ? 'Tutup Semua Panduan' : 'Buka Semua Panduan & Contoh Soal'}</span>
+                {allExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {/* Vertical Stepper Timeline with Connecting Line */}
+            <div className="relative pl-6 sm:pl-8 space-y-8 before:absolute before:left-3 sm:before:left-4 before:top-4 before:bottom-4 before:w-0.5 before:bg-gradient-to-b before:from-sky-500 via-blue-500 to-indigo-600">
+              {/* ======================================================
+                  STEP 1: TES KEMAMPUAN KOGNITIF (APTITUDE TEST)
+                  ====================================================== */}
+              <div className="relative pl-6 space-y-3 group">
+                <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-sky-600 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow">
+                  1
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">Tes Kemampuan Kognitif (Aptitude Test)</h4>
+                      <span className="text-[10px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                        Bobot 25%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Mengukur kecerdasan daya tangkap dan logika analitis melalui 3 domain: Logika Numerik (deret angka), Logika Verbal (silogisme & analogi), dan Logika Spasial visual 3D.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-sky-700 bg-sky-50 px-3 py-1 rounded-full border border-sky-200 shrink-0">
+                    12 Menit • 11 Soal
+                  </span>
+                </div>
+
+                {/* Toggle Guide & Example Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuide(1)}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-sky-600 hover:text-sky-800 bg-sky-50 hover:bg-sky-100/80 px-3 py-1.5 rounded-xl border border-sky-200 transition-colors cursor-pointer"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{expandedGuides[1] ? 'Sembunyikan Panduan & Contoh Soal' : 'Lihat Cara Mengerjakan & Contoh Soal Sub-tes 1'}</span>
+                    {expandedGuides[1] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded Box: Cara Mengerjakan & Contoh Soal Kognitif */}
+                {expandedGuides[1] && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-sky-50/50 border border-sky-200/80 space-y-4 animate-in fade-in duration-200 text-xs">
+                    {/* Petunjuk Cara Mengerjakan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-sky-950">
+                        <BookOpen className="w-4 h-4 text-sky-700" />
+                        <span>Cara Mengerjakan Sub-tes 1:</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-1 text-slate-700 text-[11px] leading-relaxed">
+                        <li>
+                          <strong>Format Soal:</strong> Berisi 11 butir soal pilihan ganda (A, B, C, D) yang menguji deret angka, silogisme rasional, dan penalaran matriks 3 dimensi.
+                        </li>
+                        <li>
+                          <strong>Alokasi Waktu:</strong> Disediakan 12 menit (~65 detik per soal). Dahulukan mengerjakan soal yang polanya langsung Anda pahami.
+                        </li>
+                        <li>
+                          <strong>Aturan Penilaian:</strong> Tidak ada sistem minus untuk jawaban salah. Pastikan seluruh soal dijawab sebelum timer auto-submit.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Kotak Contoh Soal Interaktif */}
+                    <div className="p-4 rounded-xl bg-white border border-sky-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <PlayCircle className="w-3.5 h-3.5 text-sky-600" />
+                          Contoh Soal Latihan: Logika Numerik (Deret Angka)
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">Simulasi Interaktif</span>
+                      </div>
+
+                      <p className="text-slate-800 font-medium">
+                        Tentukan angka berikutnya pada barisan deret di bawah ini: <br />
+                        <span className="font-mono font-bold text-sky-800 text-sm tracking-widest bg-sky-50 px-2.5 py-0.5 rounded border border-sky-100 mt-1 inline-block">
+                          3, 8, 18, 38, 78, [ ... ]
+                        </span>
+                      </p>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                        {[
+                          { id: 'A', text: '148' },
+                          { id: 'B', text: '158' },
+                          { id: 'C', text: '168' },
+                          { id: 'D', text: '178' },
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setPracticeCogAnswer(opt.id)}
+                            className={`p-2 rounded-lg border text-center font-bold text-xs transition-all cursor-pointer ${
+                              practiceCogAnswer === opt.id
+                                ? opt.id === 'B'
+                                  ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-400'
+                                  : 'bg-rose-50 border-rose-400 text-rose-800'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span>{opt.id}. {opt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Penjelasan Kunci */}
+                      {practiceCogAnswer && (
+                        <div
+                          className={`p-3 rounded-lg text-[11px] leading-relaxed border ${
+                            practiceCogAnswer === 'B'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              : 'bg-amber-50 border-amber-200 text-amber-900'
+                          }`}
+                        >
+                          <strong className="block font-bold">
+                            {practiceCogAnswer === 'B' ? '✅ Jawaban Benar (B. 158)!' : '⚠️ Jawaban Kurang Tepat! Kunci yang benar adalah B (158).'}
+                          </strong>
+                          <span>
+                            <strong>Pembahasan Pola:</strong> Setiap suku merupakan hasil perkalian 2 dari suku sebelumnya lalu ditambah 2: <br />
+                            • (3 × 2) + 2 = 8 <br />
+                            • (8 × 2) + 2 = 18 <br />
+                            • (18 × 2) + 2 = 38 <br />
+                            • (38 × 2) + 2 = 78 <br />
+                            • (78 × 2) + 2 = <strong>158</strong>.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ======================================================
+                  STEP 2: TES KEPRIBADIAN (WORK STYLE INVENTORY)
+                  ====================================================== */}
+              <div className="relative pl-6 space-y-3 group">
+                <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow">
+                  2
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">Tes Kepribadian (Work Style Inventory)</h4>
+                      <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                        Bobot 20%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Format Forced-Choice DISC/PAPI Kostick: Mengukur profil etos kerja, konsistensi etika, stabilitas kepribadian, dan kecocokan budaya kerja manufaktur.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-blue-700 bg-blue-50 px-3 py-1 rounded-full border border-blue-200 shrink-0">
+                    10 Menit • 5 Set Pernyataan
+                  </span>
+                </div>
+
+                {/* Toggle Guide & Example Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuide(2)}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100/80 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors cursor-pointer"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{expandedGuides[2] ? 'Sembunyikan Panduan & Contoh Soal' : 'Lihat Cara Mengerjakan & Contoh Soal Sub-tes 2'}</span>
+                    {expandedGuides[2] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded Box: Cara Mengerjakan & Contoh Soal Kepribadian */}
+                {expandedGuides[2] && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-blue-50/50 border border-blue-200/80 space-y-4 animate-in fade-in duration-200 text-xs">
+                    {/* Petunjuk Cara Mengerjakan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-blue-950">
+                        <BookOpen className="w-4 h-4 text-blue-700" />
+                        <span>Cara Mengerjakan Sub-tes 2 (Format Forced-Choice):</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-1 text-slate-700 text-[11px] leading-relaxed">
+                        <li>
+                          <strong>Mekanisme Most & Least:</strong> Di setiap kelompok terdapat 4 pernyataan kerja. Anda <strong>WAJIB</strong> memilih 1 pernyataan yang <strong>[M] (Paling Menggambarkan)</strong> dan 1 pernyataan yang <strong>[L] (Paling Tidak Menggambarkan)</strong> diri Anda.
+                        </li>
+                        <li>
+                          <strong>Aturan Validasi:</strong> Anda TIDAK dapat memilih kolom [M] dan kolom [L] pada baris pernyataan yang sama.
+                        </li>
+                        <li>
+                          <strong>Konsistensi Jawaban:</strong> Tidak ada jawaban benar atau salah. Sistem psikometri mengukur konsistensi pola kepribadian dan integritas kerja Anda.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Kotak Contoh Latihan Interaktif Most/Least */}
+                    <div className="p-4 rounded-xl bg-white border border-blue-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <PlayCircle className="w-3.5 h-3.5 text-blue-600" />
+                          Simulasi Latihan Format Most [M] dan Least [L]
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">Coba Klik Tombol M & L</span>
+                      </div>
+
+                      <div className="space-y-2">
+                        {[
+                          { id: 'p1', text: 'Saya selalu teliti memeriksa kepatuhan spesifikasi sebelum meloloskan barang.' },
+                          { id: 'p2', text: 'Saya berani mengambil inisiatif cepat saat mesin lini produksi mengalami kendala.' },
+                          { id: 'p3', text: 'Saya mengutamakan kerja sama tim yang rukun dan suasana kerja harmonis.' },
+                          { id: 'p4', text: 'Saya menyukai metode kerja yang terencana rapi dengan instruksi kerja (SOP) tertulis.' },
+                        ].map((item) => (
+                          <div
+                            key={item.id}
+                            className={`p-2.5 rounded-xl border flex items-center justify-between gap-3 text-xs ${
+                              practicePersMost === item.id
+                                ? 'bg-sky-50 border-sky-300'
+                                : practicePersLeast === item.id
+                                ? 'bg-rose-50 border-rose-300'
+                                : 'bg-slate-50 border-slate-200'
+                            }`}
+                          >
+                            <span className="text-slate-800 flex-1 leading-snug">{item.text}</span>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPracticePersMost(item.id);
+                                  if (practicePersLeast === item.id) setPracticePersLeast(null);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                                  practicePersMost === item.id
+                                    ? 'bg-sky-600 text-white shadow-sm'
+                                    : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
+                                }`}
+                              >
+                                [M] Paling
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setPracticePersLeast(item.id);
+                                  if (practicePersMost === item.id) setPracticePersMost(null);
+                                }}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition-all cursor-pointer ${
+                                  practicePersLeast === item.id
+                                    ? 'bg-rose-600 text-white shadow-sm'
+                                    : 'bg-white border border-slate-300 text-slate-600 hover:bg-slate-100'
+                                }`}
+                              >
+                                [L] Kurang
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Feedback Interaktif */}
+                      <div className="p-2.5 rounded-lg bg-blue-50 border border-blue-200 text-blue-900 text-[11px] leading-relaxed">
+                        {practicePersMost && practicePersLeast ? (
+                          <span>
+                            ✅ <strong>Format Pilihan Anda Sempurna!</strong> Anda telah memilih 1 pernyataan [M] dan 1 pernyataan [L] pada baris berbeda. Pada tes asli, lengkapi ke-5 set pernyataan seperti ini.
+                          </span>
+                        ) : (
+                          <span>
+                            👉 <em>Pilih 1 tombol <strong>[M]</strong> dan 1 tombol <strong>[L]</strong> pada dua baris yang berbeda untuk mencoba simulasi.</em>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ======================================================
+                  STEP 3: SITUATIONAL JUDGMENT TEST (SJT)
+                  ====================================================== */}
+              <div className="relative pl-6 space-y-3 group">
+                <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-indigo-600 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow">
+                  3
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">Situational Judgment Test (SJT)</h4>
+                      <span className="text-[10px] font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
+                        Bobot 20%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Skenario dilema operasional pabrik manufaktur plastik (konflik mutu, kepatuhan K3, integritas stok) untuk menguji respons etika dan kepemimpinan profesional.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-full border border-indigo-200 shrink-0">
+                    10 Menit • 4 Kasus Nyata
+                  </span>
+                </div>
+
+                {/* Toggle Guide & Example Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuide(3)}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100/80 px-3 py-1.5 rounded-xl border border-indigo-200 transition-colors cursor-pointer"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{expandedGuides[3] ? 'Sembunyikan Panduan & Contoh Soal' : 'Lihat Cara Mengerjakan & Contoh Soal Sub-tes 3'}</span>
+                    {expandedGuides[3] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded Box: Cara Mengerjakan & Contoh Soal SJT */}
+                {expandedGuides[3] && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-indigo-50/50 border border-indigo-200/80 space-y-4 animate-in fade-in duration-200 text-xs">
+                    {/* Petunjuk Cara Mengerjakan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-indigo-950">
+                        <BookOpen className="w-4 h-4 text-indigo-700" />
+                        <span>Cara Mengerjakan Sub-tes 3:</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-1 text-slate-700 text-[11px] leading-relaxed">
+                        <li>
+                          <strong>Evaluasi Dilema:</strong> Anda dihadapkan pada skenario kerja nyata di pabrik di mana terjadi pertentangan antara target kecepatan, SOP mutu, dan keselamatan kerja (K3).
+                        </li>
+                        <li>
+                          <strong>Kriteria Pilihan:</strong> Pilih 1 tindakan yang paling menunjukkan integritas, kepatuhan standar mutu ISO 9001, serta komunikasi yang beretika.
+                        </li>
+                        <li>
+                          <strong>Hindari Solusi Pintas:</strong> Hindari tindakan yang meloloskan barang cacat atau menyembunyikan kesalahan demi mengejar target sesaat.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Kotak Contoh Soal Interaktif SJT */}
+                    <div className="p-4 rounded-xl bg-white border border-indigo-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <PlayCircle className="w-3.5 h-3.5 text-indigo-600" />
+                          Contoh Kasus Operasional: Dilema Mutu vs Deadline Pengiriman
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">Simulasi Interaktif</span>
+                      </div>
+
+                      <p className="text-slate-800 leading-relaxed">
+                        <em>
+                          &quot;Menjelang jam pengiriman sore, ditemukan 2 palet produk botol plastik dengan cacat goresan halus yang melebihi toleransi visual. Staf Penjualan mendesak agar produk tetap dimuat ke truk karena pelanggan meminta barang sampai hari ini. Tindakan terbaik Anda adalah...&quot;
+                        </em>
+                      </p>
+
+                      <div className="space-y-2 pt-1">
+                        {[
+                          {
+                            id: 'A',
+                            text: 'Meloloskan pengiriman dengan memberi diskon informal kepada supir ekspedisi.',
+                            isBest: false,
+                          },
+                          {
+                            id: 'B',
+                            text: 'Menahan lot tersebut, melakukan sortir cepat bersama tim QC, dan menginformasikan manajemen untuk menjadwalkan pengiriman pengganti sesuai SOP mutu ISO 9001.',
+                            isBest: true,
+                          },
+                          {
+                            id: 'C',
+                            text: 'Mematikan sistem komputer dan membiarkan truk pengiriman menunggu tanpa kepastian.',
+                            isBest: false,
+                          },
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setPracticeSjtAnswer(opt.id)}
+                            className={`w-full text-left p-2.5 rounded-xl border text-xs transition-all flex items-start gap-2.5 cursor-pointer ${
+                              practiceSjtAnswer === opt.id
+                                ? opt.isBest
+                                  ? 'bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-400'
+                                  : 'bg-rose-50 border-rose-300 text-rose-950'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span className="font-bold shrink-0">{opt.id}.</span>
+                            <span className="leading-snug">{opt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Penjelasan Kunci */}
+                      {practiceSjtAnswer && (
+                        <div
+                          className={`p-3 rounded-lg text-[11px] leading-relaxed border ${
+                            practiceSjtAnswer === 'B'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              : 'bg-amber-50 border-amber-200 text-amber-900'
+                          }`}
+                        >
+                          <strong className="block font-bold">
+                            {practiceSjtAnswer === 'B'
+                              ? '✅ Pilihan Respons Terbaik (B)!'
+                              : '⚠️ Kurang Tepat! Pilihan terbaik adalah B.'}
+                          </strong>
+                          <span>
+                            <strong>Ulasan Etika Industri:</strong> Meloloskan barang cacat berisiko memicu retur massal dan klaim ganti rugi dari klien yang merusak reputasi pabrik. Tindakan terbaik adalah menahan lot, melakukan sortir cepat, dan mengomunikasikan jadwal kirim pengganti secara transparan.
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ======================================================
+                  STEP 4: TES KETELITIAN & KECEPATAN (KRAEPELIN DIGITAL)
+                  ====================================================== */}
+              <div className="relative pl-6 space-y-3 group">
+                <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-teal-600 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow">
+                  4
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">Tes Ketelitian & Kecepatan (Kraepelin Digital)</h4>
+                      <span className="text-[10px] font-bold text-teal-700 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                        Bobot 15%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Tes koran digital: penjumlahan cepat dua angka acak beruntun untuk mengukur fokus, tempo kerja, dan ketahanan di bawah tekanan waktu.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-teal-700 bg-teal-50 px-3 py-1 rounded-full border border-teal-200 shrink-0">
+                    90 Detik Cepat • Aliran Kontinu
+                  </span>
+                </div>
+
+                {/* Toggle Guide & Example Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuide(4)}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-teal-600 hover:text-teal-800 bg-teal-50 hover:bg-teal-100/80 px-3 py-1.5 rounded-xl border border-teal-200 transition-colors cursor-pointer"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{expandedGuides[4] ? 'Sembunyikan Panduan & Contoh Soal' : 'Lihat Cara Mengerjakan & Mini Simulasi Kraepelin'}</span>
+                    {expandedGuides[4] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded Box: Cara Mengerjakan & Mini Kraepelin Simulator */}
+                {expandedGuides[4] && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-teal-50/50 border border-teal-200/80 space-y-4 animate-in fade-in duration-200 text-xs">
+                    {/* Petunjuk Cara Mengerjakan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-teal-950">
+                        <BookOpen className="w-4 h-4 text-teal-700" />
+                        <span>Cara Mengerjakan Sub-tes 4 (Aturan Digit Satuan):</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-1 text-slate-700 text-[11px] leading-relaxed">
+                        <li>
+                          <strong>ATURAN SATUAN (Paling Penting):</strong> Jumlahkan dua angka yang muncul di layar. Jika hasil penjumlahan adalah dua digit (≥ 10), <strong>HANYA KETIKKAN DIGIT TERAKHIRNYA (SATUANNYA) SAJA</strong>!
+                          <div className="mt-1 p-2 rounded bg-white border border-teal-200 font-mono text-[11px] text-teal-900 space-y-0.5">
+                            <div>• 3 + 4 = 7 &rarr; Jawab: <strong>7</strong></div>
+                            <div>• 8 + 7 = 15 &rarr; Jawab: <strong>5</strong> (bukan 15)</div>
+                            <div>• 9 + 9 = 18 &rarr; Jawab: <strong>8</strong></div>
+                            <div>• 6 + 4 = 10 &rarr; Jawab: <strong>0</strong></div>
+                          </div>
+                        </li>
+                        <li>
+                          <strong>Input Mudah:</strong> Anda bisa mengetik langsung tombol angka <strong>0–9 di keyboard fisik laptop/PC</strong> atau mengklik keypad di layar.
+                        </li>
+                        <li>
+                          <strong>Auto-Flow:</strong> Setiap menekan tombol angka, sistem langsung melompat ke pasangan angka berikutnya secara instan tanpa perlu menekan Enter.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Mini Kraepelin Simulator */}
+                    <div className="p-4 rounded-xl bg-white border border-teal-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <PlayCircle className="w-3.5 h-3.5 text-teal-600" />
+                          Mini Simulator Kraepelin (Coba Jawab Sekarang)
+                        </span>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          Berhasil: {kraepelinDrill.correctCount}x
+                        </span>
+                      </div>
+
+                      {/* Math Display */}
+                      <div className="text-center py-2 space-y-1">
+                        <span className="text-[10px] text-slate-400 font-semibold block uppercase tracking-wider">
+                          Berapa digit satuan hasil penjumlahan ini?
+                        </span>
+                        <div className="inline-flex items-center justify-center gap-3 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-inner font-mono text-2xl font-black">
+                          <span className="text-sky-400">{kraepelinDrill.n1}</span>
+                          <span className="text-slate-500">+</span>
+                          <span className="text-emerald-400">{kraepelinDrill.n2}</span>
+                          <span className="text-slate-500">=</span>
+                          <span className="text-amber-400">?</span>
+                        </div>
+                      </div>
+
+                      {/* Interactive Keypad 0-9 */}
+                      <div className="max-w-xs mx-auto">
+                        <div className="grid grid-cols-5 gap-1.5">
+                          {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map((val) => (
+                            <button
+                              key={val}
+                              type="button"
+                              onClick={() => handleKraepelinDrillInput(val)}
+                              className="py-2 rounded-lg bg-slate-100 hover:bg-teal-600 hover:text-white border border-slate-300 font-mono font-bold text-sm text-slate-800 transition-colors active:scale-95 shadow-sm cursor-pointer"
+                            >
+                              {val}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Feedback Simulator */}
+                      {kraepelinDrill.feedback && (
+                        <div
+                          className={`p-2.5 rounded-lg text-[11px] leading-relaxed text-center font-medium border ${
+                            kraepelinDrill.feedback.includes('Hebat')
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              : 'bg-rose-50 border-rose-200 text-rose-900'
+                          }`}
+                        >
+                          {kraepelinDrill.feedback}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ======================================================
+                  STEP 5: TES LOGIKA ALGORITMA & ALUR SISTEM
+                  ====================================================== */}
+              <div className="relative pl-6 space-y-3 group">
+                <div className="absolute -left-6 sm:-left-8 top-1 w-6 h-6 rounded-full bg-slate-800 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow">
+                  5
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-bold text-base text-slate-900">Tes Logika Algoritma & Alur Sistem</h4>
+                      <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        Bobot 20%
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-600 leading-relaxed">
+                      Analisis diagram alur percabangan flowchart, optimasi antrian mesin (SPT), dan investigasi akar penyebab 5-Why problem solving.
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200 shrink-0">
+                    8 Menit • 3 Studi Kasus Teknis
+                  </span>
+                </div>
+
+                {/* Toggle Guide & Example Button */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => toggleGuide(5)}
+                    className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 hover:text-slate-950 bg-slate-100 hover:bg-slate-200/80 px-3 py-1.5 rounded-xl border border-slate-300 transition-colors cursor-pointer"
+                  >
+                    <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                    <span>{expandedGuides[5] ? 'Sembunyikan Panduan & Contoh Soal' : 'Lihat Cara Mengerjakan & Contoh Soal Sub-tes 5'}</span>
+                    {expandedGuides[5] ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
+                {/* Expanded Box: Cara Mengerjakan & Contoh Soal Logika Algoritma */}
+                {expandedGuides[5] && (
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-100/60 border border-slate-200 space-y-4 animate-in fade-in duration-200 text-xs">
+                    {/* Petunjuk Cara Mengerjakan */}
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-1.5 font-bold text-slate-950">
+                        <BookOpen className="w-4 h-4 text-slate-700" />
+                        <span>Cara Mengerjakan Sub-tes 5:</span>
+                      </div>
+                      <ul className="list-disc pl-5 space-y-1 text-slate-700 text-[11px] leading-relaxed">
+                        <li>
+                          <strong>3 Konsep Pemecahan Masalah:</strong> Menguji pemahaman terhadap alur kondisi mesin (Flowchart IF-THEN), optimasi urutan pengerjaan pesanan (Shortest Processing Time / SPT), dan metode investigasi akar masalah 5-Why.
+                        </li>
+                        <li>
+                          <strong>Telusuri Logika Sistem:</strong> Ikuti urutan flowchart langkah demi langkah sesuai input data sensor yang tertera pada soal.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Kotak Contoh Soal Interaktif Flowchart */}
+                    <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-sm space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                        <span className="font-bold text-slate-800 flex items-center gap-1.5">
+                          <PlayCircle className="w-3.5 h-3.5 text-slate-700" />
+                          Contoh Logika Flowchart: Kontrol Suhu Barel Ekstrusi
+                        </span>
+                        <span className="text-[10px] text-slate-400 font-mono">Simulasi Interaktif</span>
+                      </div>
+
+                      {/* Visual Flowchart Box */}
+                      <div className="p-3 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] space-y-1 overflow-x-auto">
+                        <div className="text-sky-400 font-bold">[Mulai: Sensor Suhu Barel]</div>
+                        <div>├── Apakah Suhu &gt; 220°C?</div>
+                        <div>│   ├── [YA]   &rarr; <span className="text-amber-400 font-bold">Jalankan Chiller Pendingin Otomatis</span></div>
+                        <div>│   └── [TIDAK]&rarr; Apakah Suhu &lt; 190°C?</div>
+                        <div>│                   ├── [YA]   &rarr; <span className="text-rose-400 font-bold">Nyalakan Elemen Pemanas Barel</span></div>
+                        <div>│                   └── [TIDAK]&rarr; <span className="text-emerald-400 font-bold">Suhu Optimal: Pertahankan Kecepatan Mesin</span></div>
+                      </div>
+
+                      <p className="text-slate-800 font-medium">
+                        Jika sensor mendeteksi suhu barel saat ini adalah <strong>232°C</strong>, tindakan otomatis sistem berikutnya adalah...
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        {[
+                          { id: 'A', text: 'Nyalakan Elemen Pemanas', isCorrect: false },
+                          { id: 'B', text: 'Jalankan Chiller Pendingin Otomatis', isCorrect: true },
+                          { id: 'C', text: 'Matikan Seluruh Mesin', isCorrect: false },
+                        ].map((opt) => (
+                          <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => setPracticeLogicAnswer(opt.id)}
+                            className={`p-2.5 rounded-lg border text-xs font-bold text-center transition-all cursor-pointer ${
+                              practiceLogicAnswer === opt.id
+                                ? opt.isCorrect
+                                  ? 'bg-emerald-50 border-emerald-500 text-emerald-900 ring-2 ring-emerald-400'
+                                  : 'bg-rose-50 border-rose-300 text-rose-900'
+                                : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            <span>{opt.id}. {opt.text}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Penjelasan Kunci */}
+                      {practiceLogicAnswer && (
+                        <div
+                          className={`p-3 rounded-lg text-[11px] leading-relaxed border ${
+                            practiceLogicAnswer === 'B'
+                              ? 'bg-emerald-50 border-emerald-200 text-emerald-900'
+                              : 'bg-amber-50 border-amber-200 text-amber-900'
+                          }`}
+                        >
+                          <strong className="block font-bold">
+                            {practiceLogicAnswer === 'B'
+                              ? '✅ Tepat Sekali (B)!'
+                              : '⚠️ Kurang Tepat! Kunci yang benar adalah B.'}
+                          </strong>
+                          <span>
+                            <strong>Pembahasan Alur:</strong> Suhu 232°C &gt; 220°C, sehingga kondisi percabangan pertama bernilai YA. Sistem segera menyalakan Chiller Pendingin Otomatis agar biji plastik di barel tidak mengalami degradasi termal (hangus).
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Readiness Callout & Passing Criteria */}
+            <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-200/90 text-amber-950 text-xs space-y-2">
               <div className="flex items-center gap-2 font-bold text-amber-900">
-                <AlertCircle className="w-4 h-4 text-amber-700" />
-                <span>Ketentuan Penting Sistem Ujian Online:</span>
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <span>Ketentuan Penting & Mekanisme Waktu Kaku (Rigid Timer):</span>
               </div>
-              <ul className="list-disc list-inside space-y-1 text-amber-900 text-[11px] leading-relaxed">
-                <li>Setiap sub-tes diatur dengan <strong>waktu rigid tersendiri</strong>. Ketika waktu di pojok layar habis, sistem akan melakukan <strong>auto-submit otomatis</strong> dan langsung memindahkan Anda ke sub-tes berikutnya tanpa bisa merevisi sub-tes sebelumnya.</li>
-                <li>Setelah Anda menyelesaikan satu sub-tes, lembar jawaban tersebut akan <strong>dikunci permanen</strong>.</li>
-                <li>Batas kelulusan (passing grade) adalah minimal <strong>75%</strong> dari total bobot evaluasi. Jika dinyatakan <strong>LULUS</strong>, tahap berikutnya yaitu <strong>Ujian Kompetensi Keahlian Teknis</strong> akan otomatis terbuka!</li>
+              <ul className="list-disc pl-5 space-y-1 text-amber-800 text-[11px] leading-relaxed">
+                <li>
+                  Setiap sub-tes diatur dengan batas waktu rigid tersendiri. Ketika waktu habis, lembar jawaban akan di-<strong>auto submit</strong> otomatis dan Anda langsung dipindahkan ke sub-tes berikutnya tanpa bisa merevisi sub-tes sebelumnya.
+                </li>
+                <li>
+                  Batas kelulusan minimum (Passing Grade) adalah <strong>75%</strong> dari total bobot evaluasi. Jika dinyatakan <strong>LULUS</strong>, tahap berikutnya yaitu <strong>Ujian Kompetensi Keahlian Teknis</strong> akan otomatis terbuka di portal pelamar Anda.
+                </li>
               </ul>
             </div>
 
-            {/* Start Button */}
+            {/* Checkbox Konfirmasi Kesiapan */}
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex items-start gap-3">
+              <input
+                id="agree-rules"
+                type="checkbox"
+                checked={hasAgreedToRules}
+                onChange={(e) => setHasAgreedToRules(e.target.checked)}
+                className="w-4 h-4 text-sky-600 rounded border-slate-300 focus:ring-sky-500 mt-0.5 cursor-pointer"
+              />
+              <label htmlFor="agree-rules" className="text-xs text-slate-700 leading-relaxed cursor-pointer select-none">
+                <strong>Konfirmasi Kesiapan Ujian:</strong> Saya telah membaca petunjuk cara pengerjaan dan memahami simulasi contoh soal untuk ke-5 sub-tes di atas. Saya siap memulai sesi asesmen resmi berbatas waktu ini secara mandiri dan jujur.
+              </label>
+            </div>
+
+            {/* Launch Action CTA */}
             <div className="text-center pt-2">
               <button
                 type="button"
+                disabled={!hasAgreedToRules}
                 onClick={handleStartExam}
-                className="px-8 py-3.5 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-lg shadow-sky-600/25 transition-all hover:scale-[1.02] flex items-center justify-center gap-2 mx-auto"
+                className={`px-8 py-4 rounded-2xl font-bold text-sm shadow-lg transition-all flex items-center justify-center gap-2 mx-auto ${
+                  hasAgreedToRules
+                    ? 'bg-sky-600 hover:bg-sky-700 text-white shadow-sky-600/25 hover:scale-[1.02] cursor-pointer'
+                    : 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+                }`}
               >
-                <span>Mulai Mengerjakan Psikotes Sekarang</span>
+                <span>Mulai Menjalani Sesi Asesmen Sekarang</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
+              <p className="text-[11px] text-slate-400 mt-2">
+                Pastikan perangkat baterai cukup dan koneksi internet stabil sebelum memulai.
+              </p>
             </div>
           </div>
         )}
+
 
         {/* ========================================================
             CASE 2: TEST RUNNER AKTIF (SUBTEST 1 - 5)
@@ -809,7 +1544,7 @@ export default function PsychologyTestPage() {
                   </div>
                 )}
 
-                {/* Screen Keypad for Fast Tapping or Mobile */}
+                {/* Screen Keypad for Fast Tapping */}
                 <div className="space-y-2">
                   <span className="text-[11px] text-slate-400">Tekan tombol angka keyboard (0-9) atau tombol keypad di bawah:</span>
                   <div className="grid grid-cols-5 gap-2 max-w-xs mx-auto">
@@ -996,7 +1731,7 @@ export default function PsychologyTestPage() {
       </main>
 
       {/* Footer */}
-      <footer className="h-14 border-t border-slate-200 bg-white flex items-center justify-between px-6 text-xs text-slate-400 max-w-5xl w-full mx-auto">
+      <footer className="h-14 border-t border-slate-200 bg-white flex items-center justify-between px-6 text-xs text-slate-400 max-w-6xl w-full mx-auto">
         <div className="flex items-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
           <span>Sistem Ujian Terakreditasi CV. Asia Plastik</span>
