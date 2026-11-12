@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { channel, destination, otp } = await request.json();
+    const { channel, destination, otp, token } = await request.json();
 
     if (!channel || !destination || !otp) {
       return NextResponse.json(
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     // 1. WhatsApp Delivery
     if (channel === 'wa') {
-      const fonnteToken = process.env.FONNTE_TOKEN;
+      const fonnteToken = token || process.env.FONNTE_TOKEN;
       const cleanPhone = destination.replace(/\D/g, '').replace(/^0/, '62');
 
       if (fonnteToken) {
@@ -27,22 +27,30 @@ export async function POST(request: Request) {
             body: JSON.stringify({
               target: cleanPhone,
               message: `*CV. ASIA PLASTIK - PORTAL REKRUTMEN*\n\nKode Verifikasi OTP Anda adalah: *${otp}*\n\nGunakan kode ini untuk menyelesaikan verifikasi akun. Kode hanya berlaku selama 5 menit.\n_Jangan bagikan kode ini kepada siapa pun demi keamanan akun Anda._`,
+              countryCode: '62',
             }),
           });
           const fonnteData = await res.json();
           return NextResponse.json({
-            success: true,
+            success: fonnteData.status !== false,
+            configured: true,
             provider: 'fonnte',
             result: fonnteData,
           });
-        } catch (fonnteErr) {
+        } catch (fonnteErr: any) {
           console.error('Fonnte send error:', fonnteErr);
+          return NextResponse.json({
+            success: false,
+            configured: true,
+            error: fonnteErr.message || 'Gagal menghubungi server WhatsApp Fonnte.',
+          });
         }
       }
 
-      // Fallback response for WhatsApp (wa.me link dispatch handled on frontend)
+      // If Fonnte token is not yet configured
       return NextResponse.json({
         success: true,
+        configured: false,
         provider: 'direct_whatsapp',
         phone: cleanPhone,
         otp,
@@ -107,3 +115,5 @@ export async function POST(request: Request) {
     );
   }
 }
+
+
