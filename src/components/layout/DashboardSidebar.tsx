@@ -9,9 +9,11 @@ import {
   User,
   FileText,
   ClipboardCheck,
+  Briefcase,
   Clock,
   LogOut,
   X,
+  Lock,
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
@@ -94,10 +96,16 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       active: pathname === '/dashboard/screening',
     },
     {
-      name: 'Tes Kompetensi',
+      name: 'Psikotes Online',
       href: '/dashboard/competency-test',
       icon: ClipboardCheck,
       active: pathname === '/dashboard/competency-test',
+    },
+    {
+      name: 'Tes Keahlian Teknis',
+      href: '/dashboard/skill-test',
+      icon: Briefcase,
+      active: pathname === '/dashboard/skill-test',
     },
     {
       name: 'Status Lamaran',
