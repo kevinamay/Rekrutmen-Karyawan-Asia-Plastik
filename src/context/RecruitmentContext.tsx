@@ -1,6 +1,9 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { auth, db } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import {
   Candidate,
   StageInfo,
@@ -92,6 +95,21 @@ interface RecruitmentContextType {
   competencyPassed: boolean | null;
   competencyCompletedAt: string | null;
 
+  // Psikotes Online (Tahap 4)
+  psychologyScore: number | null;
+  psychologyPassed: boolean | null;
+  psychologyCompletedAt: string | null;
+  savePsychologyResult: (score: number, passed: boolean) => void;
+
+  // Prerequisite & Strict Stage Locking Helpers
+  isProfileCompleted: boolean;
+  isDocsCompleted: boolean;
+  isDocsUnlocked: boolean;
+  isPsychologyUnlocked: boolean;
+  isPsychologyCompleted: boolean;
+  isSkillTestUnlocked: boolean;
+  isSkillTestCompleted: boolean;
+
   // Actions
   updateCandidate: (data: Partial<Candidate>) => void;
   setUploadedDocs: React.Dispatch<React.SetStateAction<UploadedDocItem[]>>;
@@ -131,6 +149,11 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
   const [competencyPassed, setCompetencyPassed] = useState<boolean | null>(null);
   const [competencyCompletedAt, setCompetencyCompletedAt] = useState<string | null>(null);
 
+  // Psikotes Online (Tahap 4) State
+  const [psychologyScore, setPsychologyScore] = useState<number | null>(null);
+  const [psychologyPassed, setPsychologyPassed] = useState<boolean | null>(null);
+  const [psychologyCompletedAt, setPsychologyCompletedAt] = useState<string | null>(null);
+
   // Load persisted state from localStorage on client mount
   useEffect(() => {
     try {
@@ -144,10 +167,86 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         if (parsed.competencyScore !== undefined) setCompetencyScore(parsed.competencyScore);
         if (parsed.competencyPassed !== undefined) setCompetencyPassed(parsed.competencyPassed);
         if (parsed.competencyCompletedAt) setCompetencyCompletedAt(parsed.competencyCompletedAt);
+        if (parsed.psychologyScore !== undefined) setPsychologyScore(parsed.psychologyScore);
+        if (parsed.psychologyPassed !== undefined) setPsychologyPassed(parsed.psychologyPassed);
+        if (parsed.psychologyCompletedAt) setPsychologyCompletedAt(parsed.psychologyCompletedAt);
+      }
+
+      // Check specific storage keys
+      const savedProfile = localStorage.getItem('asiaplastik_profile_data');
+      if (savedProfile) {
+        const p = JSON.parse(savedProfile);
+        if (p.nik && p.fullName) {
+          setProfileCompleted(true);
+        }
+      }
+
+      const savedDocs = localStorage.getItem('asiaplastik_uploaded_docs');
+      if (savedDocs) {
+        const d = JSON.parse(savedDocs);
+        if (Array.isArray(d) && d.length > 0) {
+          setUploadedDocs(d);
+        }
+      }
+
+      const savedPsycho = localStorage.getItem('asiaplastik_psychology_result');
+      if (savedPsycho) {
+        const py = JSON.parse(savedPsycho);
+        if (py.totalScore !== undefined) {
+          setPsychologyScore(py.totalScore);
+          setPsychologyPassed(Boolean(py.passed));
+          if (py.completedAt) setPsychologyCompletedAt(py.completedAt);
+        }
+      }
+
+      const savedSkill = localStorage.getItem('asiaplastik_skill_test_answers');
+      if (savedSkill) {
+        const sk = JSON.parse(savedSkill);
+        if (sk.result) {
+          setCompetencyScore(sk.result.score);
+          setCompetencyPassed(Boolean(sk.result.passed));
+        }
       }
     } catch (e) {
       console.warn('Error reading recruitment state from localStorage:', e);
     }
+  }, []);
+
+  // Sync with Firebase Auth and Firestore for authenticated candidate
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        try {
+          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
+          if (userDoc.exists()) {
+            const data = userDoc.data();
+            if (data.profileCompleted !== undefined) setProfileCompleted(Boolean(data.profileCompleted));
+            if (data.uploadedDocs && Array.isArray(data.uploadedDocs)) setUploadedDocs(data.uploadedDocs);
+            if (data.psychologyScore !== undefined) {
+              setPsychologyScore(data.psychologyScore);
+              setPsychologyPassed(Boolean(data.psychologyPassed));
+            }
+            if (data.competencyScore !== undefined) {
+              setCompetencyScore(data.competencyScore);
+              setCompetencyPassed(Boolean(data.competencyPassed));
+            }
+            if (data.appliedRole || data.fullName) {
+              setCandidate((prev) => ({
+                ...prev,
+                fullName: data.fullName || prev.fullName,
+                email: data.email || prev.email,
+                phone: data.phone || prev.phone,
+                appliedRole: data.appliedRole || prev.appliedRole,
+              }));
+            }
+          }
+        } catch (err) {
+          console.error('Error synchronizing candidate state from Firestore:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Save changes to localStorage
@@ -161,6 +260,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         competencyScore,
         competencyPassed,
         competencyCompletedAt,
+        psychologyScore,
+        psychologyPassed,
+        psychologyCompletedAt,
         ...overrides,
       };
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
@@ -169,12 +271,19 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     }
   };
 
+  // Helper flags for prerequisite checks
+  const isProfileCompleted = profileCompleted || Boolean(candidate.nik);
+  const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
+  const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
+  const isDocsCompleted = requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length;
+  const isDocsUnlocked = isProfileCompleted;
+  const isPsychologyUnlocked = isDocsCompleted && isProfileCompleted;
+  const isPsychologyCompleted = psychologyScore !== null;
+  const isSkillTestUnlocked = isPsychologyCompleted && Boolean(psychologyPassed);
+  const isSkillTestCompleted = competencyScore !== null;
+
   // Dynamically recalculate stages based on real candidate progress
   useEffect(() => {
-    const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
-    const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
-    const allRequiredUploaded = requiredDocs.length > 0 && uploadedRequiredCount === requiredDocs.length;
-
     setStages((prev) =>
       prev.map((s) => {
         if (s.id === 'application') {
@@ -183,31 +292,31 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         if (s.id === 'profile') {
           return {
             ...s,
-            status: profileCompleted ? 'completed' : 'in_progress',
-            score: profileCompleted ? 100 : undefined,
+            status: isProfileCompleted ? 'completed' : 'in_progress',
+            score: isProfileCompleted ? 100 : undefined,
           };
         }
         if (s.id === 'cv-screening') {
-          if (allRequiredUploaded) {
+          if (isDocsCompleted) {
             return { ...s, status: 'passed', score: 95 };
           }
           if (uploadedRequiredCount > 0) {
             return { ...s, status: 'in_progress' };
           }
-          return { ...s, status: profileCompleted ? 'in_progress' : 'pending' };
+          return { ...s, status: isDocsUnlocked ? 'in_progress' : 'pending' };
         }
         if (s.id === 'competency-test') {
-          if (competencyScore !== null) {
+          if (isPsychologyCompleted) {
             return {
               ...s,
-              status: (competencyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
-              score: competencyScore,
+              status: (psychologyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
+              score: psychologyScore ?? 0,
             };
           }
-          return { ...s, status: allRequiredUploaded ? 'in_progress' : 'pending' };
+          return { ...s, status: isPsychologyUnlocked ? 'in_progress' : 'pending' };
         }
         if (s.id === 'interview') {
-          if (competencyPassed) {
+          if (isSkillTestCompleted && competencyPassed) {
             return { ...s, status: 'in_progress' };
           }
           return { ...s, status: 'pending' };
@@ -215,7 +324,18 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         return s;
       })
     );
-  }, [profileCompleted, uploadedDocs, competencyScore, competencyPassed]);
+  }, [
+    isProfileCompleted,
+    isDocsCompleted,
+    isDocsUnlocked,
+    isPsychologyUnlocked,
+    isPsychologyCompleted,
+    psychologyScore,
+    psychologyPassed,
+    isSkillTestCompleted,
+    competencyPassed,
+    uploadedRequiredCount,
+  ]);
 
   const updateCandidate = (data: Partial<Candidate>) => {
     setCandidate((prev) => {
@@ -227,14 +347,38 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
 
   const saveProfileData = (data: any) => {
     setProfileCompleted(true);
-    if (data.fullName || data.phone || data.email) {
+    if (data.fullName || data.phone || data.email || data.nik) {
       updateCandidate({
         fullName: data.fullName || candidate.fullName,
         phone: data.phone || candidate.phone,
         email: data.email || candidate.email,
+        nik: data.nik || candidate.nik,
       });
     }
     persistState({ profileCompleted: true });
+  };
+
+  const savePsychologyResult = (score: number, passed: boolean) => {
+    const completedAt = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    setPsychologyScore(score);
+    setPsychologyPassed(passed);
+    setPsychologyCompletedAt(completedAt);
+    try {
+      localStorage.setItem('asiaplastik_psychology_result', JSON.stringify({
+        totalScore: score,
+        passed,
+        completedAt,
+      }));
+    } catch (e) {}
+    persistState({
+      psychologyScore: score,
+      psychologyPassed: passed,
+      psychologyCompletedAt: completedAt,
+    });
   };
 
   const saveCompetencyResult = (
@@ -278,8 +422,15 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     setCompetencyScore(null);
     setCompetencyPassed(null);
     setCompetencyCompletedAt(null);
+    setPsychologyScore(null);
+    setPsychologyPassed(null);
+    setPsychologyCompletedAt(null);
     try {
       localStorage.removeItem(LOCAL_STORAGE_KEY);
+      localStorage.removeItem('asiaplastik_profile_data');
+      localStorage.removeItem('asiaplastik_uploaded_docs');
+      localStorage.removeItem('asiaplastik_psychology_result');
+      localStorage.removeItem('asiaplastik_skill_test_answers');
     } catch (e) {}
   };
 
@@ -327,6 +478,17 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         competencyScore,
         competencyPassed,
         competencyCompletedAt,
+        psychologyScore,
+        psychologyPassed,
+        psychologyCompletedAt,
+        savePsychologyResult,
+        isProfileCompleted,
+        isDocsCompleted,
+        isDocsUnlocked,
+        isPsychologyUnlocked,
+        isPsychologyCompleted,
+        isSkillTestUnlocked,
+        isSkillTestCompleted,
         updateCandidate,
         setUploadedDocs,
         saveProfileData,

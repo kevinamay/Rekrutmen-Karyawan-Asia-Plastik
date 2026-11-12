@@ -17,9 +17,13 @@ export function buildDynamicStages(params: {
   profileCompleted: boolean;
   uploadedCount: number;
   requiredDocsCount: number;
+  psychologyScore: number | null;
+  psychologyPassed: boolean | null;
+  psychologyCompletedAt?: string | null;
   competencyScore: number | null;
   competencyPassed: boolean | null;
   competencyCompletedAt: string | null;
+  appliedRole?: string;
 }): RecruitmentMilestone[] {
   const {
     candidateName,
@@ -27,14 +31,21 @@ export function buildDynamicStages(params: {
     profileCompleted,
     uploadedCount,
     requiredDocsCount,
+    psychologyScore,
+    psychologyPassed,
+    psychologyCompletedAt,
     competencyScore,
     competencyPassed,
     competencyCompletedAt,
+    appliedRole,
   } = params;
 
   const docsCompleted = requiredDocsCount > 0 && uploadedCount >= requiredDocsCount;
-  const examTaken = competencyScore !== null;
-  const isInterviewActive = examTaken && Boolean(competencyPassed);
+  const psychoTaken = psychologyScore !== null;
+  const psychoPassed = Boolean(psychologyPassed);
+  const skillTaken = competencyScore !== null;
+  const isInterviewActive = skillTaken && Boolean(competencyPassed);
+  const targetRole = appliedRole || 'Supervisor Quality Control (QC)';
 
   return [
     {
@@ -46,8 +57,8 @@ export function buildDynamicStages(params: {
       date: 'Terverifikasi Resmi',
       score: 100,
       evaluator: 'Sistem Portal Otomatis',
-      summary: `Akun pelamar ${candidateName || 'Kandidat'} terdaftar resmi untuk posisi Supervisor Quality Control (QC) di portal rekrutmen CV. Asia Plastik.`,
-      notes: `Email ${candidateEmail || 'pelamar'} aktif dan terverifikasi.`,
+      summary: `Akun pelamar ${candidateName || 'Kandidat'} terdaftar resmi untuk posisi ${targetRole} di portal karir CV. Asia Plastik.`,
+      notes: `Email ${candidateEmail || 'pelamar'} aktif dan terverifikasi di database.`,
     },
     {
       stageNumber: 2,
@@ -61,7 +72,7 @@ export function buildDynamicStages(params: {
       summary: profileCompleted
         ? 'Seluruh formulir data pribadi, kontak darurat, dan riwayat pendidikan telah tersimpan lengkap.'
         : 'Silakan isi seluruh kolom identitas KTP, nomor WhatsApp, riwayat pendidikan dan sertifikasi di menu Biodata Diri.',
-      notes: profileCompleted ? 'Biodata siap diproses untuk seleksi administrasi.' : 'Data wajib dilengkapi sebelum verifikasi berkas.',
+      notes: profileCompleted ? 'Biodata siap diproses untuk verifikasi berkas.' : 'Data wajib dilengkapi sebelum verifikasi berkas.',
     },
     {
       stageNumber: 3,
@@ -79,24 +90,42 @@ export function buildDynamicStages(params: {
     },
     {
       stageNumber: 4,
-      id: 'cbt',
-      title: 'Ujian Kompetensi Teknis QC Manufaktur',
-      subtitle: 'Defek Injeksi, ISO 9001 NCR, Lab MFI & Budaya 5R',
-      status: examTaken ? 'completed' : docsCompleted ? 'in_progress' : 'upcoming',
-      date: competencyCompletedAt || (docsCompleted ? 'Siap Dikerjakan' : 'Menunggu Berkas'),
-      score: examTaken ? competencyScore : undefined,
-      evaluator: 'Kepala Bagian Quality Assurance Pabrik',
-      summary: examTaken
-        ? competencyPassed
-          ? `Lolos ambang batas kelulusan dengan skor ${competencyScore}% (Passing Grade: 80%). Menguasai defek injeksi, penanganan NCR ISO 9001, dan pengujian polimer.`
-          : `Ujian kompetensi teknis telah selesai dengan nilai ${competencyScore}%. Passing grade minimum adalah 80%.`
-        : 'Ujian kompetensi teknis 5 butir soal online seputar kendali mutu manufaktur plastik CV. Asia Plastik.',
-      notes: examTaken
-        ? (competencyPassed ? 'Rekomendasi lolos wawancara diterbitkan oleh Bagian Mutu.' : 'Evaluasi teknis selesai.')
-        : 'Batas waktu pengerjaan 30 menit.',
+      id: 'psycho',
+      title: 'Psikotes & Asesmen Potensi Kerja Online',
+      subtitle: 'Kognitif, Kepribadian Forced-Choice, SJT, Kraepelin & Algoritma',
+      status: psychoTaken ? 'completed' : docsCompleted ? 'in_progress' : 'upcoming',
+      date: psychologyCompletedAt || (psychoTaken ? 'Telah Selesai' : docsCompleted ? 'Siap Dikerjakan' : 'Terkunci (Menunggu Berkas)'),
+      score: psychoTaken ? (psychologyScore ?? undefined) : undefined,
+      evaluator: 'Biro Psikologi & HRD Asesmen Terpadu',
+      summary: psychoTaken
+        ? psychoPassed
+          ? `Lolos psikotes asesmen potensi kerja dengan nilai komposit ${psychologyScore}% (Passing Grade: 75%). Hasil menunjukkan ketelitian, daya tangkap, dan stabilitas emosi yang unggul.`
+          : `Hasil psikotes telah dievaluasi dengan nilai ${psychologyScore}%. Passing grade kelulusan adalah 75%.`
+        : 'Asesmen psikometrik online 5 subtes (Aptitude, Work Style, SJT, Kraepelin Digital, dan Flowchart Logika).',
+      notes: psychoTaken
+        ? (psychoPassed ? 'Akses Ujian Kompetensi Keahlian Teknis telah dibuka.' : 'Hasil psikotes tersimpan di database.')
+        : 'Waktu per sub-tes kaku (rigid timer). Nilai minimal kelulusan 75%.',
     },
     {
       stageNumber: 5,
+      id: 'cbt',
+      title: 'Ujian Kompetensi Keahlian Teknis',
+      subtitle: 'Defek Injeksi & Ekstrusi, ISO 9001 NCR, Pengujian Polimer & 5R',
+      status: skillTaken ? 'completed' : psychoPassed ? 'in_progress' : 'upcoming',
+      date: competencyCompletedAt || (skillTaken ? 'Telah Selesai' : psychoPassed ? 'Siap Dikerjakan' : 'Terkunci (Menunggu Lolos Psikotes)'),
+      score: skillTaken ? (competencyScore ?? undefined) : undefined,
+      evaluator: 'Kepala Bagian Quality Assurance & Produksi Pabrik',
+      summary: skillTaken
+        ? competencyPassed
+          ? `Lolos ambang batas kelulusan teknis dengan skor ${competencyScore}% (Passing Grade: 80%). Menguasai defek injeksi, penanganan NCR ISO 9001, dan pengujian polimer.`
+          : `Ujian kompetensi teknis telah selesai dengan nilai ${competencyScore}%. Passing grade minimum adalah 80%.`
+        : 'Ujian teknis online seputar kendali mutu lini produksi manufaktur plastik CV. Asia Plastik.',
+      notes: skillTaken
+        ? (competencyPassed ? 'Rekomendasi wawancara tatap muka telah diterbitkan.' : 'Evaluasi teknis selesai.')
+        : 'Batas waktu pengerjaan 30 menit dengan passing grade 80%.',
+    },
+    {
+      stageNumber: 6,
       id: 'interview',
       title: 'Wawancara Teknis Lapangan & Manajemen HRD',
       subtitle: 'Tatap Muka di Kantor Operasional Pabrik CV. Asia Plastik Sidoarjo',
@@ -109,7 +138,7 @@ export function buildDynamicStages(params: {
       notes: 'Wajib mengenakan pakaian formal dan membawa berkas ijazah serta e-KTP asli.',
     },
     {
-      stageNumber: 6,
+      stageNumber: 7,
       id: 'mcu',
       title: 'Pemeriksaan Kesehatan Kerja (MCU Pabrik)',
       subtitle: 'Laboratorium Klinik Mitra CV. Asia Plastik',
@@ -120,7 +149,7 @@ export function buildDynamicStages(params: {
       notes: 'Surat rujukan resmi klinik akan diberikan setelah lulus sesi wawancara.',
     },
     {
-      stageNumber: 7,
+      stageNumber: 8,
       id: 'offering',
       title: 'Offering Letter & Penandatanganan Kontrak',
       subtitle: 'Penetapan Gaji, Tunjangan Produksi & Onboarding',

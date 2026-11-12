@@ -28,6 +28,7 @@ export interface Candidate {
   fullName: string;
   email: string;
   phone: string;
+  nik?: string;
   location: string;
   headline: string;
   avatarUrl: string;

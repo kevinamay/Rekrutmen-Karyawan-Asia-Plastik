@@ -31,7 +31,13 @@ const PSYCHO_STORAGE_KEY = 'asiaplastik_psychology_result';
 
 export default function SkillTestPage() {
   const router = useRouter();
-  const { candidate, competencyScore, competencyPassed, saveCompetencyResult } = useRecruitment();
+  const {
+    candidate,
+    competencyScore,
+    competencyPassed,
+    saveCompetencyResult,
+    psychologyPassed,
+  } = useRecruitment();
   const { openMobileSidebar } = useDashboardLayout();
 
   const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
@@ -54,6 +60,10 @@ export default function SkillTestPage() {
 
   // Check Prerequisite from Context / LocalStorage / Firestore
   useEffect(() => {
+    if (psychologyPassed) {
+      setIsPsychologyPassed(true);
+    }
+
     // 1. Check localStorage first
     try {
       const savedPsycho = localStorage.getItem(PSYCHO_STORAGE_KEY);
@@ -106,7 +116,7 @@ export default function SkillTestPage() {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [psychologyPassed]);
 
   // Countdown Timer
   useEffect(() => {

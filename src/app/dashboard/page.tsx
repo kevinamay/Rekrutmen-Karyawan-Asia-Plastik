@@ -36,8 +36,12 @@ export default function DashboardPage() {
     updateCandidate,
     profileCompleted,
     uploadedDocs,
+    psychologyScore,
+    psychologyPassed,
     competencyScore,
     competencyPassed,
+    isProfileCompleted,
+    isDocsCompleted,
   } = useRecruitment();
   const { openMobileSidebar } = useDashboardLayout();
 
@@ -126,8 +130,10 @@ export default function DashboardPage() {
 
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
-  const docsDone = requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length;
-  const examDone = competencyScore !== null;
+  const docsDone = isDocsCompleted || (requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length);
+  const profileDone = isProfileCompleted || profileCompleted;
+  const psychoDone = Boolean(psychologyScore !== null && psychologyPassed);
+  const skillDone = Boolean(competencyScore !== null && competencyPassed);
 
   // Categories list
   const categories = [
@@ -192,12 +198,16 @@ export default function DashboardPage() {
     setAppliedNotice(`Anda telah memilih posisi "${job.title}". Melanjutkan ke pengisian berkas & biodata...`);
 
     setTimeout(() => {
-      if (!profileCompleted) {
+      if (!profileDone) {
         router.push('/dashboard/profile');
       } else if (!docsDone) {
         router.push('/dashboard/screening');
-      } else {
+      } else if (!psychoDone) {
         router.push('/dashboard/competency-test');
+      } else if (!skillDone) {
+        router.push('/dashboard/skill-test');
+      } else {
+        router.push('/dashboard/status');
       }
     }, 1200);
   };
@@ -256,32 +266,38 @@ export default function DashboardPage() {
                 Lamaran Terpilih: {currentAppliedRole}
               </span>
               <h2 className="text-base sm:text-lg font-bold">
-                {!profileCompleted
+                {!profileDone
                   ? 'Lengkapi Biodata Diri Resmi Anda'
                   : !docsDone
                   ? 'Unggah Berkas Persyaratan Pelamar'
-                  : !examDone
-                  ? 'Kerjakan Ujian Kompetensi Teknis'
+                  : !psychoDone
+                  ? 'Kerjakan Psikotes & Asesmen Potensi Kerja'
+                  : !skillDone
+                  ? 'Kerjakan Ujian Kompetensi Keahlian Teknis'
                   : 'Pantau Jadwal Wawancara Tatap Muka'}
               </h2>
               <p className="text-xs text-sky-100 max-w-xl">
-                {!profileCompleted
+                {!profileDone
                   ? 'Pemeriksaan berkas tahap berikutnya akan dimulai setelah formulir biodata diri terisi lengkap.'
                   : !docsDone
-                  ? `Tersimpan ${uploadedRequiredCount} dari ${requiredDocs.length} berkas wajib. Lengkapi berkas untuk melanjutkan ke ujian teknis.`
-                  : !examDone
-                  ? 'Ujian teknis online berdurasi 30 menit mengenai parameter kompetensi industri plastik.'
-                  : 'Undangan resmi wawancara tatap muka telah diterbitkan bersama Tim Manajemen Pabrik.'}
+                  ? `Tersimpan ${uploadedRequiredCount} dari ${requiredDocs.length || 5} berkas wajib. Lengkapi seluruh berkas wajib untuk membuka akses psikotes online.`
+                  : !psychoDone
+                  ? 'Asesmen psikometrik online 5 subtes (Kognitif, Kepribadian, SJT, Kraepelin Digital, dan Flowchart Algoritma) dengan batas kelulusan minimal 75%.'
+                  : !skillDone
+                  ? 'Ujian teknis online berdurasi 30 menit mengenai parameter kompetensi kendali mutu industri plastik.'
+                  : 'Undangan resmi wawancara tatap muka telah diterbitkan bersama Tim Manajemen Pabrik Sidoarjo.'}
               </p>
             </div>
             <Link
               href={
-                !profileCompleted
+                !profileDone
                   ? '/dashboard/profile'
                   : !docsDone
                   ? '/dashboard/screening'
-                  : !examDone
+                  : !psychoDone
                   ? '/dashboard/competency-test'
+                  : !skillDone
+                  ? '/dashboard/skill-test'
                   : '/dashboard/status'
               }
               className="px-4 py-2.5 rounded-xl bg-white text-sky-700 font-bold text-xs hover:bg-sky-50 shrink-0 self-start sm:self-center transition-all hover:scale-[1.02] shadow-sm flex items-center gap-1.5"

@@ -29,6 +29,7 @@ import {
   ExternalLink,
   Sparkles,
   Download,
+  Lock,
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -44,6 +45,9 @@ export default function StatusDecisionDashboardPage() {
     updateCandidate,
     profileCompleted,
     uploadedDocs,
+    psychologyScore,
+    psychologyPassed,
+    psychologyCompletedAt,
     competencyScore,
     competencyPassed,
     competencyCompletedAt,
@@ -100,9 +104,13 @@ export default function StatusDecisionDashboardPage() {
     profileCompleted,
     uploadedCount,
     requiredDocsCount: requiredDocs.length,
+    psychologyScore,
+    psychologyPassed,
+    psychologyCompletedAt,
     competencyScore,
     competencyPassed,
     competencyCompletedAt,
+    appliedRole: candidate.appliedRole,
   });
 
   // Calculate dynamic progress
@@ -249,13 +257,15 @@ export default function StatusDecisionDashboardPage() {
                               ? 'bg-emerald-600 text-white ring-4 ring-emerald-50'
                               : isInProgress
                               ? 'bg-sky-600 text-white ring-4 ring-sky-100 animate-pulse'
-                              : 'bg-white text-slate-400 border-2 border-slate-300'
+                              : 'bg-slate-100 text-slate-400 border border-slate-300'
                           }`}
                         >
                           {isCompleted ? (
                             <CheckCircle2 className="w-4 h-4" />
-                          ) : (
+                          ) : isInProgress ? (
                             <span>{stage.stageNumber}</span>
+                          ) : (
+                            <Lock className="w-3 h-3 text-slate-400" />
                           )}
                         </div>
 

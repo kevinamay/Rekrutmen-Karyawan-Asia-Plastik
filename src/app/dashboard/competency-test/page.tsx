@@ -76,7 +76,15 @@ const SUBTEST_NAMES = [
 
 export default function PsychologyTestPage() {
   const router = useRouter();
-  const { candidate, updateCandidate } = useRecruitment();
+  const {
+    candidate,
+    updateCandidate,
+    isProfileCompleted,
+    isDocsCompleted,
+    isPsychologyUnlocked,
+    savePsychologyResult,
+    uploadedDocs,
+  } = useRecruitment();
   const { openMobileSidebar } = useDashboardLayout();
 
   const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
@@ -304,6 +312,7 @@ export default function PsychologyTestPage() {
 
     setFinalScoreData(resultPayload);
     setTestFinished(true);
+    savePsychologyResult(compositeScore, isPassed);
 
     try {
       localStorage.setItem(PSYCHO_STORAGE_KEY, JSON.stringify(resultPayload));
@@ -332,7 +341,7 @@ export default function PsychologyTestPage() {
         console.error('Error saving psychology score to Firestore:', err);
       }
     }
-  }, [cognitiveAnswers, personalityAnswers, sjtAnswers, kraepelinTotalAnswered, kraepelinCorrect, logicAnswers, candidateUid]);
+  }, [cognitiveAnswers, personalityAnswers, sjtAnswers, kraepelinTotalAnswered, kraepelinCorrect, logicAnswers, candidateUid, savePsychologyResult]);
 
   // Handle advancing to the next subtest (Manual or Auto-Submit on Timer Expiry)
   const advanceToNextSubtest = useCallback(() => {
@@ -403,6 +412,235 @@ export default function PsychologyTestPage() {
     setCurrentSubtest(0);
     setSecondsRemaining(SUBTEST_DURATIONS[0]);
   };
+
+  const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
+  const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
+
+  const profileIsDone = isProfileCompleted || (typeof window !== 'undefined' && Boolean(localStorage.getItem('asiaplastik_profile_data')));
+  const docsAreDone = isDocsCompleted || (requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length);
+
+  // Prerequisite Gates: Only active if test hasn't been completed yet
+  if (!testFinished && !finalScoreData) {
+    if (!profileIsDone) {
+      return (
+        <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800 pb-20">
+          <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openMobileSidebar}
+                className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 text-xs">
+                <Link href="/dashboard" className="text-slate-400 hover:text-sky-600">
+                  Dashboard
+                </Link>
+                <span className="text-slate-300">/</span>
+                <span className="font-bold text-slate-900">Psikotes Online Pelamar</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Tahap 4 Terkunci</span>
+              </span>
+              <a
+                href="https://wa.me/6282244109503"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Bantuan HRD</span>
+              </a>
+            </div>
+          </header>
+
+          <main className="p-4 sm:p-6 lg:p-8 max-w-4xl w-full mx-auto space-y-6 my-auto">
+            <div className="bg-white rounded-3xl border border-amber-200/80 shadow-sm p-8 sm:p-12 text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
+                <Lock className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2 max-w-xl mx-auto">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                  <Lock className="w-3.5 h-3.5" />
+                  Tahap 4 Terkunci: Prasyarat Biodata Diri
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Lengkapi Formulir Biodata Diri Terlebih Dahulu
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Sesuai dengan regulasi rekrutmen terpadu CV. Asia Plastik, Anda wajib melengkapi data pribadi, kontak darurat, dan riwayat pendidikan pada <strong>Tahap 2</strong> sebelum dapat mengakses asesmen psikotes online.
+                </p>
+              </div>
+
+              {/* Stepper Status Visual */}
+              <div className="max-w-md mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-3">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Alur Tahapan Rekrutmen:
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 1: Registrasi & Pilihan Posisi Lowongan</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    2
+                  </span>
+                  <span className="text-slate-900 font-bold">Tahap 2: Pengisian Biodata Diri (Perlu Dilengkapi)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 3: Unggah Berkas & CV (Terkunci)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 4: Psikotes Online (Terkunci)</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/dashboard/profile"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition-all"
+                >
+                  <UserCheck className="w-4 h-4" />
+                  <span>Isi Formulir Biodata Sekarang</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                >
+                  <span>Kembali ke Beranda</span>
+                </Link>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    if (!docsAreDone) {
+      return (
+        <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800 pb-20">
+          <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openMobileSidebar}
+                className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 text-xs">
+                <Link href="/dashboard" className="text-slate-400 hover:text-sky-600">
+                  Dashboard
+                </Link>
+                <span className="text-slate-300">/</span>
+                <span className="font-bold text-slate-900">Psikotes Online Pelamar</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Tahap 4 Terkunci</span>
+              </span>
+              <a
+                href="https://wa.me/6282244109503"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Bantuan HRD</span>
+              </a>
+            </div>
+          </header>
+
+          <main className="p-4 sm:p-6 lg:p-8 max-w-4xl w-full mx-auto space-y-6 my-auto">
+            <div className="bg-white rounded-3xl border border-amber-200/80 shadow-sm p-8 sm:p-12 text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
+                <Lock className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2 max-w-xl mx-auto">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                  <Lock className="w-3.5 h-3.5" />
+                  Tahap 4 Terkunci: Prasyarat Berkas Belum Lengkap
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Unggah Seluruh Berkas & Dokumen CV Terlebih Dahulu
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Anda baru mengunggah <strong>{uploadedRequiredCount} dari {requiredDocs.length || 5} berkas wajib</strong> (CV, KTP, Ijazah, Pas Foto, SKCK). Sesuai alur resmi rekrutmen CV. Asia Plastik, seluruh berkas wajib harus diunggah di <strong>Tahap 3</strong> sebelum Anda diizinkan mengerjakan Psikotes Online.
+                </p>
+              </div>
+
+              {/* Stepper Status Visual */}
+              <div className="max-w-md mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-3">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Alur Tahapan Rekrutmen:
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 1: Registrasi & Pilihan Posisi Lowongan</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 2: Pengisian Biodata Diri (Lengkap)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    3
+                  </span>
+                  <span className="text-slate-900 font-bold">
+                    Tahap 3: Unggah Berkas & CV ({uploadedRequiredCount}/{requiredDocs.length || 5} Berkas)
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 4: Psikotes Online (Terkunci)</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/dashboard/screening"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition-all"
+                >
+                  <FileCheck2 className="w-4 h-4" />
+                  <span>Unggah Berkas Sekarang</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                >
+                  <span>Kembali ke Beranda</span>
+                </Link>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800 pb-20">
