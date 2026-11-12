@@ -13,48 +13,37 @@ export async function POST(request: Request) {
 
     // 1. WhatsApp Delivery
     if (channel === 'wa') {
-      const fonnteToken = token || process.env.FONNTE_TOKEN;
+      const fonnteToken = process.env.FONNTE_TOKEN || token || 'LErSX56LUN9YAy5sJaiN';
       const cleanPhone = destination.replace(/\D/g, '').replace(/^0/, '62');
 
-      if (fonnteToken) {
-        try {
-          const res = await fetch('https://api.fonnte.com/send', {
-            method: 'POST',
-            headers: {
-              Authorization: fonnteToken,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              target: cleanPhone,
-              message: `*CV. ASIA PLASTIK - PORTAL REKRUTMEN*\n\nKode Verifikasi OTP Anda adalah: *${otp}*\n\nGunakan kode ini untuk menyelesaikan verifikasi akun. Kode hanya berlaku selama 5 menit.\n_Jangan bagikan kode ini kepada siapa pun demi keamanan akun Anda._`,
-              countryCode: '62',
-            }),
-          });
-          const fonnteData = await res.json();
-          return NextResponse.json({
-            success: fonnteData.status !== false,
-            configured: true,
-            provider: 'fonnte',
-            result: fonnteData,
-          });
-        } catch (fonnteErr: any) {
-          console.error('Fonnte send error:', fonnteErr);
-          return NextResponse.json({
-            success: false,
-            configured: true,
-            error: fonnteErr.message || 'Gagal menghubungi server WhatsApp Fonnte.',
-          });
-        }
+      try {
+        const res = await fetch('https://api.fonnte.com/send', {
+          method: 'POST',
+          headers: {
+            Authorization: fonnteToken,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            target: cleanPhone,
+            message: `*CV. ASIA PLASTIK - PORTAL REKRUTMEN*\n\nKode Verifikasi OTP Anda adalah: *${otp}*\n\nGunakan kode ini untuk menyelesaikan verifikasi akun. Kode hanya berlaku selama 5 menit.\n_Jangan bagikan kode ini kepada siapa pun demi keamanan akun Anda._`,
+            countryCode: '62',
+          }),
+        });
+        const fonnteData = await res.json();
+        return NextResponse.json({
+          success: fonnteData.status !== false,
+          configured: true,
+          provider: 'fonnte',
+          result: fonnteData,
+        });
+      } catch (fonnteErr: any) {
+        console.error('Fonnte send error:', fonnteErr);
+        return NextResponse.json({
+          success: false,
+          configured: true,
+          error: fonnteErr.message || 'Gagal menghubungi server WhatsApp Fonnte.',
+        });
       }
-
-      // If Fonnte token is not yet configured
-      return NextResponse.json({
-        success: true,
-        configured: false,
-        provider: 'direct_whatsapp',
-        phone: cleanPhone,
-        otp,
-      });
     }
 
     // 2. Email Delivery
