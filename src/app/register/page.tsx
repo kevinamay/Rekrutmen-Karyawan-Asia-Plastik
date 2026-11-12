@@ -98,8 +98,8 @@ export default function RegisterPage() {
         console.warn('Sign out error:', signOutErr);
       }
 
-      // 5. Redirect to login page with registered flag and email
-      router.push(`/login?registered=true&email=${encodeURIComponent(email.trim().toLowerCase())}`);
+      // 5. Redirect to OTP verification page with candidate contact details
+      router.push(`/verify-otp?channel=wa&phone=${encodeURIComponent(phone.trim())}&email=${encodeURIComponent(email.trim().toLowerCase())}`);
     } catch (err: any) {
       console.error('Firebase registration error:', err);
       let errorMsg = 'Gagal mendaftar akun. Silakan coba lagi.';
@@ -177,9 +177,8 @@ export default function RegisterPage() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Masukkan nama lengkap"
-                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
-                  errors.fullName ? 'border-red-500' : ''
-                }`}
+                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${errors.fullName ? 'border-red-500' : ''
+                  }`}
               />
             </div>
             {errors.fullName && <p className="text-xs text-red-500 mt-1">{errors.fullName}</p>}
@@ -197,9 +196,8 @@ export default function RegisterPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="08123456789"
-                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
-                    errors.phone ? 'border-red-500' : ''
-                  }`}
+                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${errors.phone ? 'border-red-500' : ''
+                    }`}
                 />
               </div>
               {errors.phone && <p className="text-xs text-red-500 mt-1">{errors.phone}</p>}
@@ -216,9 +214,8 @@ export default function RegisterPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="nama@email.com"
-                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
-                    errors.email ? 'border-red-500' : ''
-                  }`}
+                  className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${errors.email ? 'border-red-500' : ''
+                    }`}
                 />
               </div>
               {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email}</p>}
@@ -243,9 +240,8 @@ export default function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Minimal 8 karakter"
-                className={`pl-10 pr-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
-                  errors.password ? 'border-red-500' : ''
-                }`}
+                className={`pl-10 pr-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${errors.password ? 'border-red-500' : ''
+                  }`}
               />
               <button
                 type="button"
@@ -277,9 +273,8 @@ export default function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Ulangi kata sandi"
-                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${
-                  errors.confirmPassword ? 'border-red-500' : ''
-                }`}
+                className={`pl-10 h-11 text-sm rounded-xl border-slate-200 bg-white hover:border-sky-300 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-100 transition-all ${errors.confirmPassword ? 'border-red-500' : ''
+                  }`}
               />
             </div>
             {errors.confirmPassword && (
