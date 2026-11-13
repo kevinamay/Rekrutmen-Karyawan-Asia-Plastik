@@ -30,6 +30,7 @@ import {
   Sparkles,
   Download,
   Lock,
+  Video,
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -415,13 +416,21 @@ export default function StatusDecisionDashboardPage() {
                     </ul>
                   </div>
 
+                  <Link
+                    href="/dashboard/interview"
+                    className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm text-center block mb-2"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    <span>Masuk Ruang Wawancara Online</span>
+                  </Link>
+
                   <a
                     href="https://wa.me/6282244109503?text=Halo%20HRD%20CV.%20Asia%20Plastik,%20saya%20konfirmasi%20kehadiran%20wawancara%20tatap%20muka"
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm text-center block"
+                    className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm text-center block"
                   >
-                    Konfirmasi Kehadiran Wawancara
+                    Konfirmasi Kehadiran Wawancara (WhatsApp)
                   </a>
                 </div>
               ) : (
