@@ -24,7 +24,7 @@ import {
 } from 'lucide-react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 import { JobOpening, JOB_VACANCIES } from '@/data/jobVacancies';
@@ -53,12 +53,20 @@ export default function DashboardPage() {
   const [applyingJobId, setApplyingJobId] = useState<string | null>(null);
   const [appliedNotice, setAppliedNotice] = useState<string | null>(null);
 
-  // Candidate Data State: strictly empty by default until user chooses a vacancy
-  const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
-  const [candidateEmail, setCandidateEmail] = useState(candidate.email || '');
-  const [candidatePhone, setCandidatePhone] = useState(candidate.phone || '');
+  // Candidate Data: derived directly from RecruitmentContext (Single Source of Truth)
+  const candidateName = candidate.fullName || 'Pelamar';
+  const candidateEmail = candidate.email || '';
+  const candidatePhone = candidate.phone || '';
+  const currentAppliedRole = candidate.appliedRole || '';
   const [candidateUid, setCandidateUid] = useState<string | null>(null);
-  const [currentAppliedRole, setCurrentAppliedRole] = useState<string>('');
+
+  // Track auth state once
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCandidateUid(user ? user.uid : null);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Clear legacy mock appliedRole from localStorage if present
   useEffect(() => {
@@ -71,62 +79,11 @@ export default function DashboardPage() {
             parsed.candidate.appliedRole = '';
             parsed.candidate.appliedDepartment = '';
             localStorage.setItem('asiaplastik_recruitment_v1', JSON.stringify(parsed));
-            setCurrentAppliedRole('');
             updateCandidate({ appliedRole: '', appliedDepartment: '' });
-          } else if (parsed.candidate?.appliedRole && parsed.candidate?.manuallySelected) {
-            setCurrentAppliedRole(parsed.candidate.appliedRole);
           }
         }
       } catch (e) {}
     }
-  }, [updateCandidate]);
-
-  // Sync with context
-  useEffect(() => {
-    if (candidate.fullName) setCandidateName(candidate.fullName);
-    if (candidate.email) setCandidateEmail(candidate.email);
-    if (candidate.phone) setCandidatePhone(candidate.phone);
-    if (candidate.appliedRole && candidate.appliedRole !== 'Supervisor Quality Control (QC)') {
-      setCurrentAppliedRole(candidate.appliedRole);
-    }
-  }, [candidate.fullName, candidate.email, candidate.phone, candidate.appliedRole]);
-
-  // Sync with Firebase Auth and Firestore document
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        setCandidateUid(user.uid);
-        if (user.displayName) setCandidateName(user.displayName);
-        if (user.email) setCandidateEmail(user.email);
-
-        try {
-          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            const realName = data.fullName || user.displayName || 'Pelamar';
-            const realEmail = data.email || user.email || '';
-            const realPhone = data.phone || '';
-            const role = data.appliedRole || '';
-
-            setCandidateName(realName);
-            setCandidateEmail(realEmail);
-            setCandidatePhone(realPhone);
-            setCurrentAppliedRole(role);
-
-            updateCandidate({
-              fullName: realName,
-              email: realEmail,
-              phone: realPhone,
-              appliedRole: role,
-            });
-          }
-        } catch (err) {
-          console.error('Error fetching candidate profile:', err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
   }, [updateCandidate]);
 
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
@@ -199,7 +156,6 @@ export default function DashboardPage() {
       appliedDepartment: job.department,
       appliedDate: appliedDateStr,
     });
-    setCurrentAppliedRole(job.title);
 
     // Persist to Firestore if user is authenticated
     if (candidateUid) {

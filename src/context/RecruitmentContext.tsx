@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
@@ -267,8 +267,10 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
             const data = userDoc.data();
             const valid = isCandidateProfileComplete(data);
             const isDone = Boolean(data.profileCompleted && valid);
-            setProfileCompleted(isDone);
-            if (data.uploadedDocs && Array.isArray(data.uploadedDocs)) setUploadedDocs(data.uploadedDocs);
+            setProfileCompleted((prev) => (prev === isDone ? prev : isDone));
+            if (data.uploadedDocs && Array.isArray(data.uploadedDocs)) {
+              setUploadedDocs(data.uploadedDocs);
+            }
             if (data.psychologyScore !== undefined) {
               setPsychologyScore(data.psychologyScore);
               setPsychologyPassed(Boolean(data.psychologyPassed));
@@ -278,13 +280,27 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
               setCompetencyPassed(Boolean(data.competencyPassed));
             }
             if (data.appliedRole || data.fullName) {
-              setCandidate((prev) => ({
-                ...prev,
-                fullName: data.fullName || prev.fullName,
-                email: data.email || prev.email,
-                phone: data.phone || prev.phone,
-                appliedRole: data.appliedRole || prev.appliedRole,
-              }));
+              setCandidate((prev) => {
+                const nextName = data.fullName || prev.fullName;
+                const nextEmail = data.email || prev.email;
+                const nextPhone = data.phone || prev.phone;
+                const nextRole = data.appliedRole || prev.appliedRole;
+                if (
+                  prev.fullName === nextName &&
+                  prev.email === nextEmail &&
+                  prev.phone === nextPhone &&
+                  prev.appliedRole === nextRole
+                ) {
+                  return prev;
+                }
+                return {
+                  ...prev,
+                  fullName: nextName,
+                  email: nextEmail,
+                  phone: nextPhone,
+                  appliedRole: nextRole,
+                };
+              });
             }
           }
         } catch (err) {
@@ -341,56 +357,59 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
 
   // Dynamically recalculate stages based on real candidate progress
   useEffect(() => {
-    setStages((prev) =>
-      prev.map((s) => {
+    setStages((prev) => {
+      let hasChanged = false;
+      const next = prev.map((s) => {
+        let nextStatus = s.status;
+        let nextScore = s.score;
+
         if (s.id === 'application') {
-          return { ...s, status: 'completed', score: 100 };
-        }
-        if (s.id === 'profile') {
-          return {
-            ...s,
-            status: isProfileCompleted ? 'completed' : 'in_progress',
-            score: isProfileCompleted ? 100 : undefined,
-          };
-        }
-        if (s.id === 'cv-screening') {
+          nextStatus = 'completed';
+          nextScore = 100;
+        } else if (s.id === 'profile') {
+          nextStatus = isProfileCompleted ? 'completed' : 'in_progress';
+          nextScore = isProfileCompleted ? 100 : undefined;
+        } else if (s.id === 'cv-screening') {
           if (isDocsCompleted) {
-            return { ...s, status: 'passed', score: 95 };
+            nextStatus = 'passed';
+            nextScore = 95;
+          } else if (uploadedRequiredCount > 0) {
+            nextStatus = 'in_progress';
+          } else {
+            nextStatus = isDocsUnlocked ? 'in_progress' : 'pending';
           }
-          if (uploadedRequiredCount > 0) {
-            return { ...s, status: 'in_progress' };
-          }
-          return { ...s, status: isDocsUnlocked ? 'in_progress' : 'pending' };
-        }
-        if (s.id === 'interview') {
+        } else if (s.id === 'interview') {
           if (isInterviewCompleted) {
-            return { ...s, status: 'completed', score: 100 };
+            nextStatus = 'completed';
+            nextScore = 100;
+          } else {
+            nextStatus = isInterviewUnlocked ? 'in_progress' : 'pending';
           }
-          return { ...s, status: isInterviewUnlocked ? 'in_progress' : 'pending' };
-        }
-        if (s.id === 'competency-test') {
+        } else if (s.id === 'competency-test') {
           if (isPsychologyCompleted) {
-            return {
-              ...s,
-              status: (psychologyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
-              score: psychologyScore ?? 0,
-            };
+            nextStatus = (psychologyPassed ? 'passed' : 'disqualified') as StageInfo['status'];
+            nextScore = psychologyScore ?? 0;
+          } else {
+            nextStatus = isPsychologyUnlocked ? 'in_progress' : 'pending';
           }
-          return { ...s, status: isPsychologyUnlocked ? 'in_progress' : 'pending' };
-        }
-        if (s.id === 'skill-test') {
+        } else if (s.id === 'skill-test') {
           if (isSkillTestCompleted) {
-            return {
-              ...s,
-              status: (competencyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
-              score: competencyScore ?? 0,
-            };
+            nextStatus = (competencyPassed ? 'passed' : 'disqualified') as StageInfo['status'];
+            nextScore = competencyScore ?? 0;
+          } else {
+            nextStatus = isSkillTestUnlocked ? 'in_progress' : 'pending';
           }
-          return { ...s, status: isSkillTestUnlocked ? 'in_progress' : 'pending' };
+        }
+
+        if (nextStatus !== s.status || nextScore !== s.score) {
+          hasChanged = true;
+          return { ...s, status: nextStatus, score: nextScore };
         }
         return s;
-      })
-    );
+      });
+
+      return hasChanged ? next : prev;
+    });
   }, [
     isProfileCompleted,
     isDocsCompleted,
@@ -407,23 +426,31 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     uploadedRequiredCount,
   ]);
 
-  const updateCandidate = (data: Partial<Candidate>) => {
+  const updateCandidate = useCallback((data: Partial<Candidate>) => {
     setCandidate((prev) => {
+      let changed = false;
+      for (const k in data) {
+        if ((data as any)[k] !== (prev as any)[k]) {
+          changed = true;
+          break;
+        }
+      }
+      if (!changed) return prev;
       const updated = { ...prev, ...data };
       persistState({ candidate: updated });
       return updated;
     });
-  };
+  }, []);
 
-  const saveProfileData = (data: any, markAsComplete = false) => {
+  const saveProfileData = useCallback((data: any, markAsComplete = false) => {
     const isComplete = Boolean(markAsComplete && isCandidateProfileComplete(data));
-    setProfileCompleted(isComplete);
+    setProfileCompleted((prev) => (prev === isComplete ? prev : isComplete));
     if (data.fullName || data.phone || data.email || data.nik) {
       updateCandidate({
-        fullName: data.fullName || candidate.fullName,
-        phone: data.phone || candidate.phone,
-        email: data.email || candidate.email,
-        nik: data.nik || candidate.nik,
+        fullName: data.fullName,
+        phone: data.phone,
+        email: data.email,
+        nik: data.nik,
       });
     }
     try {
@@ -434,15 +461,15 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       }
     } catch (e) {}
     persistState({ profileCompleted: isComplete });
-  };
+  }, [updateCandidate]);
 
-  const saveInterviewCompleted = (completed = true) => {
+  const saveInterviewCompleted = useCallback((completed = true) => {
     const completedAt = new Date().toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
     });
-    setInterviewCompleted(completed);
+    setInterviewCompleted((prev) => (prev === completed ? prev : completed));
     setInterviewCompletedAt(completed ? completedAt : null);
     try {
       if (completed) {
@@ -457,9 +484,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       interviewCompleted: completed,
       interviewCompletedAt: completed ? completedAt : null,
     });
-  };
+  }, []);
 
-  const savePsychologyResult = (score: number, passed: boolean) => {
+  const savePsychologyResult = useCallback((score: number, passed: boolean) => {
     const completedAt = new Date().toLocaleDateString('id-ID', {
       day: 'numeric',
       month: 'long',
@@ -480,9 +507,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       psychologyPassed: passed,
       psychologyCompletedAt: completedAt,
     });
-  };
+  }, []);
 
-  const saveCompetencyResult = (
+  const saveCompetencyResult = useCallback((
     answers: Record<number, string>,
     score: number,
     passed: boolean
@@ -502,7 +529,7 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       competencyPassed: passed,
       competencyCompletedAt: completedAt,
     });
-  };
+  }, []);
 
   const updateStageStatus = (
     stageId: ApplicationStageId,

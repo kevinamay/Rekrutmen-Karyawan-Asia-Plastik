@@ -17,9 +17,8 @@ import {
   Lock,
   CheckCircle2,
 } from 'lucide-react';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 import { useRecruitment, isCandidateProfileComplete } from '@/context/RecruitmentContext';
 
 interface DashboardSidebarProps {
@@ -32,7 +31,6 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
   const router = useRouter();
   const {
     candidate,
-    updateCandidate,
     isProfileCompleted,
     isDocsCompleted,
     isDocsUnlocked,
@@ -46,42 +44,8 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
     competencyPassed,
   } = useRecruitment();
 
-  const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
-  const [candidateEmail, setCandidateEmail] = useState(candidate.email || '');
-
-  useEffect(() => {
-    if (candidate.fullName) setCandidateName(candidate.fullName);
-    if (candidate.email) setCandidateEmail(candidate.email);
-  }, [candidate.fullName, candidate.email]);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        if (user.displayName) setCandidateName(user.displayName);
-        if (user.email) setCandidateEmail(user.email);
-
-        try {
-          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            const realName = data.fullName || user.displayName || 'Pelamar';
-            const realEmail = data.email || user.email || '';
-            setCandidateName(realName);
-            setCandidateEmail(realEmail);
-            updateCandidate({
-              fullName: realName,
-              email: realEmail,
-              phone: data.phone || candidate.phone || '',
-            });
-          }
-        } catch (err) {
-          console.error('Error fetching candidate in sidebar:', err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [candidate.phone, updateCandidate]);
+  const candidateName = candidate.fullName || 'Pelamar';
+  const candidateEmail = candidate.email || '';
 
   const handleSignOut = async () => {
     try {

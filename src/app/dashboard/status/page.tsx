@@ -32,9 +32,6 @@ import {
   Lock,
   Video,
 } from 'lucide-react';
-import { auth, db } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { useDashboardLayout } from '@/components/layout/DashboardLayoutContext';
 import { buildDynamicStages, CANDIDATE_METRICS } from './mockStatusData';
@@ -43,7 +40,6 @@ export default function StatusDecisionDashboardPage() {
   const router = useRouter();
   const {
     candidate,
-    updateCandidate,
     profileCompleted,
     uploadedDocs,
     interviewCompleted,
@@ -57,46 +53,10 @@ export default function StatusDecisionDashboardPage() {
   } = useRecruitment();
   const { openMobileSidebar } = useDashboardLayout();
 
-  const [candidateName, setCandidateName] = useState(candidate.fullName || 'Pelamar');
-  const [candidateEmail, setCandidateEmail] = useState(candidate.email || '');
-  const [candidatePhone, setCandidatePhone] = useState(candidate.phone || '');
+  const candidateName = candidate.fullName || 'Pelamar';
+  const candidateEmail = candidate.email || '';
+  const candidatePhone = candidate.phone || '';
   const [expandedStage, setExpandedStage] = useState<number>(1);
-
-  // Sync candidate details
-  useEffect(() => {
-    if (candidate.fullName) setCandidateName(candidate.fullName);
-    if (candidate.email) setCandidateEmail(candidate.email);
-    if (candidate.phone) setCandidatePhone(candidate.phone);
-  }, [candidate.fullName, candidate.email, candidate.phone]);
-
-  // Sync Auth and Firestore Profile
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        if (user.displayName) setCandidateName(user.displayName);
-        if (user.email) setCandidateEmail(user.email);
-
-        try {
-          const userDoc = await getDoc(doc(db, 'candidates', user.uid));
-          if (userDoc.exists()) {
-            const data = userDoc.data();
-            if (data.fullName) setCandidateName(data.fullName);
-            if (data.email) setCandidateEmail(data.email);
-            if (data.phone) setCandidatePhone(data.phone);
-            updateCandidate({
-              fullName: data.fullName || user.displayName || 'Pelamar',
-              email: data.email || user.email || '',
-              phone: data.phone || '',
-            });
-          }
-        } catch (err) {
-          console.error('Error fetching candidate data in status:', err);
-        }
-      }
-    });
-
-    return () => unsubscribe();
-  }, [updateCandidate]);
 
   const requiredDocs = uploadedDocs.filter((d) => d.type === 'Wajib');
   const uploadedCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;

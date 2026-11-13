@@ -140,7 +140,7 @@ export default function ProfilePage() {
     });
 
     return () => unsubscribe();
-  }, [updateCandidate]);
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const updated = { ...formData, [e.target.name]: e.target.value };
