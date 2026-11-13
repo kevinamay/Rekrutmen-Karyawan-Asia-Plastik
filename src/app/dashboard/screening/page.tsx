@@ -48,6 +48,7 @@ export default function CVScreeningPage() {
     uploadedDocs,
     setUploadedDocs,
     isProfileCompleted,
+    isDocsCompleted,
     isDocsUnlocked,
   } = useRecruitment();
   const { openMobileSidebar } = useDashboardLayout();
@@ -614,6 +615,31 @@ export default function CVScreeningPage() {
             </table>
           </div>
         </div>
+
+        {/* Next Stage Navigation Banner */}
+        {isDocsCompleted && (
+          <div className="bg-gradient-to-r from-sky-900 to-slate-900 rounded-2xl p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Dokumen Persyaratan Wajib Lengkap</span>
+              </div>
+              <h4 className="text-base font-bold text-white">
+                Tahap 4 Telah Terbuka: Sesi Wawancara Online AI
+              </h4>
+              <p className="text-xs text-slate-300">
+                Berkas Anda telah siap. Lanjutkan ke sesi wawancara berbasis AI untuk verifikasi kompetensi dan pengalaman kerja Anda.
+              </p>
+            </div>
+            <Link
+              href="/dashboard/interview"
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-sky-500 hover:bg-sky-400 text-white font-bold text-sm shadow-lg shadow-sky-500/25 transition-all shrink-0 self-start sm:self-center"
+            >
+              <span>Lanjut ke Tahap 4: Wawancara Online AI</span>
+              <ArrowLeft className="w-4 h-4 rotate-180" />
+            </Link>
+          </div>
+        )}
       </main>
     </>
   );

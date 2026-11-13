@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   User,
   FileText,
+  Video,
   ClipboardCheck,
   Briefcase,
   Clock,
@@ -35,6 +36,8 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
     isProfileCompleted,
     isDocsCompleted,
     isDocsUnlocked,
+    isInterviewUnlocked,
+    isInterviewCompleted,
     isPsychologyUnlocked,
     isPsychologyCompleted,
     psychologyPassed,
@@ -134,13 +137,30 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       badge: !actuallyProfileDone ? 'Terkunci' : (actuallyProfileDone && isDocsCompleted) ? null : 'Tahap 3',
     },
     {
+      name: 'Wawancara Online AI',
+      href: '/dashboard/interview',
+      icon: Video,
+      active: pathname === '/dashboard/interview',
+      locked: !(actuallyProfileDone && isDocsCompleted),
+      completed: Boolean(isInterviewCompleted),
+      badge: !(actuallyProfileDone && isDocsCompleted)
+        ? 'Terkunci'
+        : isInterviewCompleted
+        ? null
+        : 'Tahap 4',
+    },
+    {
       name: 'Psikotes Online',
       href: '/dashboard/competency-test',
       icon: ClipboardCheck,
       active: pathname === '/dashboard/competency-test',
-      locked: !(actuallyProfileDone && isDocsCompleted),
+      locked: !isPsychologyUnlocked,
       completed: isPsychologyCompleted && Boolean(psychologyPassed),
-      badge: !(actuallyProfileDone && isDocsCompleted) ? 'Terkunci' : (isPsychologyCompleted && Boolean(psychologyPassed)) ? null : 'Tahap 4',
+      badge: !isPsychologyUnlocked
+        ? 'Terkunci'
+        : (isPsychologyCompleted && Boolean(psychologyPassed))
+        ? null
+        : 'Tahap 5',
     },
     {
       name: 'Tes Keahlian Teknis',
@@ -149,7 +169,11 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       active: pathname === '/dashboard/skill-test',
       locked: !isSkillTestUnlocked,
       completed: isSkillTestCompleted && Boolean(competencyPassed),
-      badge: !isSkillTestUnlocked ? 'Terkunci' : (isSkillTestCompleted && Boolean(competencyPassed)) ? null : 'Tahap 5',
+      badge: !isSkillTestUnlocked
+        ? 'Terkunci'
+        : (isSkillTestCompleted && Boolean(competencyPassed))
+        ? null
+        : 'Tahap 6',
     },
     {
       name: 'Status Lamaran',

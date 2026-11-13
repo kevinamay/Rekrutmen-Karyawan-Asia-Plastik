@@ -119,7 +119,12 @@ interface RecruitmentContextType {
   competencyPassed: boolean | null;
   competencyCompletedAt: string | null;
 
-  // Psikotes Online (Tahap 4)
+  // Wawancara Online AI (Tahap 4)
+  interviewCompleted: boolean;
+  interviewCompletedAt: string | null;
+  saveInterviewCompleted: (completed?: boolean) => void;
+
+  // Psikotes Online (Tahap 5)
   psychologyScore: number | null;
   psychologyPassed: boolean | null;
   psychologyCompletedAt: string | null;
@@ -129,6 +134,8 @@ interface RecruitmentContextType {
   isProfileCompleted: boolean;
   isDocsCompleted: boolean;
   isDocsUnlocked: boolean;
+  isInterviewUnlocked: boolean;
+  isInterviewCompleted: boolean;
   isPsychologyUnlocked: boolean;
   isPsychologyCompleted: boolean;
   isSkillTestUnlocked: boolean;
@@ -173,7 +180,11 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
   const [competencyPassed, setCompetencyPassed] = useState<boolean | null>(null);
   const [competencyCompletedAt, setCompetencyCompletedAt] = useState<string | null>(null);
 
-  // Psikotes Online (Tahap 4) State
+  // Wawancara Online AI (Tahap 4) State
+  const [interviewCompleted, setInterviewCompleted] = useState<boolean>(false);
+  const [interviewCompletedAt, setInterviewCompletedAt] = useState<string | null>(null);
+
+  // Psikotes Online (Tahap 5) State
   const [psychologyScore, setPsychologyScore] = useState<number | null>(null);
   const [psychologyPassed, setPsychologyPassed] = useState<boolean | null>(null);
   const [psychologyCompletedAt, setPsychologyCompletedAt] = useState<string | null>(null);
@@ -214,6 +225,13 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         if (Array.isArray(d) && d.length > 0) {
           setUploadedDocs(d);
         }
+      }
+
+      const savedInterview = localStorage.getItem('asiaplastik_interview_completed');
+      if (savedInterview === 'true') {
+        setInterviewCompleted(true);
+        const savedTime = localStorage.getItem('asiaplastik_interview_completed_at');
+        if (savedTime) setInterviewCompletedAt(savedTime);
       }
 
       const savedPsycho = localStorage.getItem('asiaplastik_psychology_result');
@@ -285,6 +303,8 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         candidate,
         uploadedDocs,
         profileCompleted,
+        interviewCompleted,
+        interviewCompletedAt,
         competencyAnswers,
         competencyScore,
         competencyPassed,
@@ -306,8 +326,16 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
   const uploadedRequiredCount = requiredDocs.filter((d) => Boolean(d.fileName)).length;
   const isDocsCompleted = requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length;
   const isDocsUnlocked = isProfileCompleted;
-  const isPsychologyUnlocked = isDocsCompleted && isProfileCompleted;
+  
+  // Tahap 4: Wawancara Online AI (Dibuka setelah Berkas & CV Lengkap)
+  const isInterviewUnlocked = isDocsCompleted && isProfileCompleted;
+  const isInterviewCompleted = Boolean(interviewCompleted);
+
+  // Tahap 5: Psikotes Online (Dibuka setelah Wawancara Online Selesai)
+  const isPsychologyUnlocked = isInterviewCompleted;
   const isPsychologyCompleted = psychologyScore !== null;
+
+  // Tahap 6: Ujian Teknis Keahlian (Dibuka setelah Lolos Psikotes)
   const isSkillTestUnlocked = isPsychologyCompleted && Boolean(psychologyPassed);
   const isSkillTestCompleted = competencyScore !== null;
 
@@ -334,6 +362,12 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
           }
           return { ...s, status: isDocsUnlocked ? 'in_progress' : 'pending' };
         }
+        if (s.id === 'interview') {
+          if (isInterviewCompleted) {
+            return { ...s, status: 'completed', score: 100 };
+          }
+          return { ...s, status: isInterviewUnlocked ? 'in_progress' : 'pending' };
+        }
         if (s.id === 'competency-test') {
           if (isPsychologyCompleted) {
             return {
@@ -344,11 +378,15 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
           }
           return { ...s, status: isPsychologyUnlocked ? 'in_progress' : 'pending' };
         }
-        if (s.id === 'interview') {
-          if (isSkillTestCompleted && competencyPassed) {
-            return { ...s, status: 'in_progress' };
+        if (s.id === 'skill-test') {
+          if (isSkillTestCompleted) {
+            return {
+              ...s,
+              status: (competencyPassed ? 'passed' : 'disqualified') as StageInfo['status'],
+              score: competencyScore ?? 0,
+            };
           }
-          return { ...s, status: 'pending' };
+          return { ...s, status: isSkillTestUnlocked ? 'in_progress' : 'pending' };
         }
         return s;
       })
@@ -357,10 +395,13 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     isProfileCompleted,
     isDocsCompleted,
     isDocsUnlocked,
+    isInterviewUnlocked,
+    isInterviewCompleted,
     isPsychologyUnlocked,
     isPsychologyCompleted,
     psychologyScore,
     psychologyPassed,
+    isSkillTestUnlocked,
     isSkillTestCompleted,
     competencyPassed,
     uploadedRequiredCount,
@@ -393,6 +434,29 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       }
     } catch (e) {}
     persistState({ profileCompleted: isComplete });
+  };
+
+  const saveInterviewCompleted = (completed = true) => {
+    const completedAt = new Date().toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    setInterviewCompleted(completed);
+    setInterviewCompletedAt(completed ? completedAt : null);
+    try {
+      if (completed) {
+        localStorage.setItem('asiaplastik_interview_completed', 'true');
+        localStorage.setItem('asiaplastik_interview_completed_at', completedAt);
+      } else {
+        localStorage.removeItem('asiaplastik_interview_completed');
+        localStorage.removeItem('asiaplastik_interview_completed_at');
+      }
+    } catch (e) {}
+    persistState({
+      interviewCompleted: completed,
+      interviewCompletedAt: completed ? completedAt : null,
+    });
   };
 
   const savePsychologyResult = (score: number, passed: boolean) => {
@@ -459,6 +523,8 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
     setCompetencyScore(null);
     setCompetencyPassed(null);
     setCompetencyCompletedAt(null);
+    setInterviewCompleted(false);
+    setInterviewCompletedAt(null);
     setPsychologyScore(null);
     setPsychologyPassed(null);
     setPsychologyCompletedAt(null);
@@ -466,6 +532,8 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
       localStorage.removeItem(LOCAL_STORAGE_KEY);
       localStorage.removeItem('asiaplastik_profile_data');
       localStorage.removeItem('asiaplastik_uploaded_docs');
+      localStorage.removeItem('asiaplastik_interview_completed');
+      localStorage.removeItem('asiaplastik_interview_completed_at');
       localStorage.removeItem('asiaplastik_psychology_result');
       localStorage.removeItem('asiaplastik_skill_test_answers');
     } catch (e) {}
@@ -515,6 +583,9 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         competencyScore,
         competencyPassed,
         competencyCompletedAt,
+        interviewCompleted,
+        interviewCompletedAt,
+        saveInterviewCompleted,
         psychologyScore,
         psychologyPassed,
         psychologyCompletedAt,
@@ -522,6 +593,8 @@ export function RecruitmentProvider({ children }: { children: React.ReactNode })
         isProfileCompleted,
         isDocsCompleted,
         isDocsUnlocked,
+        isInterviewUnlocked,
+        isInterviewCompleted,
         isPsychologyUnlocked,
         isPsychologyCompleted,
         isSkillTestUnlocked,

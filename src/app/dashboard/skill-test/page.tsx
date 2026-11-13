@@ -281,7 +281,7 @@ export default function SkillTestPage() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <span className="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-sky-100 text-sky-800">
-                Tahap 5: Ujian Keahlian Teknis
+                Tahap 6: Ujian Keahlian Teknis
               </span>
               <span className="text-xs text-slate-400 font-mono">
                 {answeredCount}/{totalQuestions} Terjawab ({progressPct}%)

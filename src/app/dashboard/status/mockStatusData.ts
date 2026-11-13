@@ -17,6 +17,8 @@ export function buildDynamicStages(params: {
   profileCompleted: boolean;
   uploadedCount: number;
   requiredDocsCount: number;
+  interviewCompleted?: boolean;
+  interviewCompletedAt?: string | null;
   psychologyScore: number | null;
   psychologyPassed: boolean | null;
   psychologyCompletedAt?: string | null;
@@ -31,6 +33,8 @@ export function buildDynamicStages(params: {
     profileCompleted,
     uploadedCount,
     requiredDocsCount,
+    interviewCompleted = false,
+    interviewCompletedAt,
     psychologyScore,
     psychologyPassed,
     psychologyCompletedAt,
@@ -41,10 +45,11 @@ export function buildDynamicStages(params: {
   } = params;
 
   const docsCompleted = requiredDocsCount > 0 && uploadedCount >= requiredDocsCount;
+  const isInterviewDone = Boolean(interviewCompleted);
   const psychoTaken = psychologyScore !== null;
   const psychoPassed = Boolean(psychologyPassed);
   const skillTaken = competencyScore !== null;
-  const isInterviewActive = skillTaken && Boolean(competencyPassed);
+  const isSkillPassed = Boolean(competencyPassed);
   const targetRole = appliedRole || 'Supervisor Quality Control (QC)';
 
   return [
@@ -86,15 +91,31 @@ export function buildDynamicStages(params: {
       summary: docsCompleted
         ? `Seluruh ${uploadedCount} dokumen berkas wajib telah berhasil diunggah dan terverifikasi oleh sistem.`
         : `Tersimpan ${uploadedCount} dari ${requiredDocsCount} berkas wajib. Silakan unggah dokumen yang diperlukan di menu Berkas & CV.`,
-      notes: 'Seluruh berkas fisik asli wajib dibawa saat wawancara tatap muka di pabrik.',
+      notes: 'Seluruh berkas fisik asli wajib dibawa saat verifikasi tatap muka di pabrik.',
     },
     {
       stageNumber: 4,
+      id: 'interview-ai',
+      title: 'Wawancara Online AI (AI Interview Room)',
+      subtitle: 'Asesmen AI Bersama Dewi Lestari (Asesor Rekrutmen)',
+      status: isInterviewDone ? 'completed' : docsCompleted ? 'in_progress' : 'upcoming',
+      date: interviewCompletedAt || (isInterviewDone ? 'Telah Selesai' : docsCompleted ? 'Siap Dikerjakan' : 'Terkunci (Menunggu Berkas)'),
+      score: isInterviewDone ? 100 : undefined,
+      evaluator: 'Dewi Lestari (Asesor Rekrutmen AI)',
+      summary: isInterviewDone
+        ? 'Sesi wawancara online AI telah berhasil diselesaikan. Evaluasi mencakup penanganan cacat produk, ISO 9001, dan kepemimpinan.'
+        : 'Sesi wawancara virtual menggunakan video interaktif dengan transkrip soal dan penjelas maksud pertanyaan.',
+      notes: isInterviewDone
+        ? 'Akses ke Tahap 5: Psikotes Online telah dibuka.'
+        : 'Wajib mengaktifkan mikrofon dan kamera selama sesi wawancara.',
+    },
+    {
+      stageNumber: 5,
       id: 'psycho',
       title: 'Psikotes & Asesmen Potensi Kerja Online',
       subtitle: 'Kognitif, Kepribadian Forced-Choice, SJT, Kraepelin & Algoritma',
-      status: psychoTaken ? 'completed' : docsCompleted ? 'in_progress' : 'upcoming',
-      date: psychologyCompletedAt || (psychoTaken ? 'Telah Selesai' : docsCompleted ? 'Siap Dikerjakan' : 'Terkunci (Menunggu Berkas)'),
+      status: psychoTaken ? 'completed' : isInterviewDone ? 'in_progress' : 'upcoming',
+      date: psychologyCompletedAt || (psychoTaken ? 'Telah Selesai' : isInterviewDone ? 'Siap Dikerjakan' : 'Terkunci (Menunggu Wawancara AI)'),
       score: psychoTaken ? (psychologyScore ?? undefined) : undefined,
       evaluator: 'Biro Psikologi & HRD Asesmen Terpadu',
       summary: psychoTaken
@@ -107,7 +128,7 @@ export function buildDynamicStages(params: {
         : 'Waktu per sub-tes kaku (rigid timer). Nilai minimal kelulusan 75%.',
     },
     {
-      stageNumber: 5,
+      stageNumber: 6,
       id: 'cbt',
       title: 'Ujian Kompetensi Keahlian Teknis',
       subtitle: 'Defek Injeksi & Ekstrusi, ISO 9001 NCR, Pengujian Polimer & 5R',
@@ -121,20 +142,20 @@ export function buildDynamicStages(params: {
           : `Ujian kompetensi teknis telah selesai dengan nilai ${competencyScore}%. Passing grade minimum adalah 80%.`
         : 'Ujian teknis online seputar kendali mutu lini produksi manufaktur plastik CV. Asia Plastik.',
       notes: skillTaken
-        ? (competencyPassed ? 'Rekomendasi wawancara tatap muka telah diterbitkan.' : 'Evaluasi teknis selesai.')
+        ? (competencyPassed ? 'Rekomendasi verifikasi lapangan & tatap muka telah diterbitkan.' : 'Evaluasi teknis selesai.')
         : 'Batas waktu pengerjaan 30 menit dengan passing grade 80%.',
     },
     {
-      stageNumber: 6,
-      id: 'interview',
-      title: 'Wawancara Teknis Lapangan & Manajemen HRD',
-      subtitle: 'Tatap Muka di Kantor Operasional Pabrik CV. Asia Plastik Sidoarjo',
-      status: isInterviewActive ? 'in_progress' : 'upcoming',
-      date: isInterviewActive ? 'Kamis, 14 November 2026 • 09:30 WIB' : 'Tahap Berikutnya',
+      stageNumber: 7,
+      id: 'final-review',
+      title: 'Wawancara Tatap Muka Manajemen & MCU Pabrik',
+      subtitle: 'Kunjungan Lapangan di Kantor Operasional Pabrik CV. Asia Plastik Sidoarjo',
+      status: isSkillPassed ? 'in_progress' : 'upcoming',
+      date: isSkillPassed ? 'Kamis, 14 November 2026 • 09:30 WIB' : 'Tahap Berikutnya',
       evaluator: 'Bpk. Hendra Gunawan (Plant Mgr) & Ibu Ratna (HRD)',
-      summary: isInterviewActive
-        ? 'Undangan wawancara tatap muka telah aktif. Pelamar dijadwalkan hadir langsung di Pabrik Utama Sidoarjo untuk evaluasi lapangan.'
-        : 'Wawancara langsung bersama Tim Manajemen Pabrik setelah lulus ujian kompetensi teknis.',
+      summary: isSkillPassed
+        ? 'Undangan wawancara tatap muka telah aktif. Pelamar dijadwalkan hadir langsung di Pabrik Utama Sidoarjo untuk evaluasi lapangan dan MCU.'
+        : 'Wawancara langsung bersama Tim Manajemen Pabrik setelah lulus seluruh tahapan ujian online.',
       notes: 'Wajib mengenakan pakaian formal dan membawa berkas ijazah serta e-KTP asli.',
     },
     {

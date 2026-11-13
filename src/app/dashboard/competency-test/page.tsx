@@ -81,6 +81,7 @@ export default function PsychologyTestPage() {
     updateCandidate,
     isProfileCompleted,
     isDocsCompleted,
+    isInterviewCompleted,
     isPsychologyUnlocked,
     savePsychologyResult,
     uploadedDocs,
@@ -434,6 +435,14 @@ export default function PsychologyTestPage() {
 
   const docsAreDone = isDocsCompleted || (requiredDocs.length > 0 && uploadedRequiredCount >= requiredDocs.length);
 
+  let interviewIsDone = Boolean(isInterviewCompleted);
+  if (typeof window !== 'undefined') {
+    const savedInterview = localStorage.getItem('asiaplastik_interview_completed');
+    if (savedInterview === 'true') {
+      interviewIsDone = true;
+    }
+  }
+
   // Prerequisite Gates: Only active if test hasn't been completed yet
   if (!testFinished && !finalScoreData) {
     if (!profileIsDone) {
@@ -459,7 +468,7 @@ export default function PsychologyTestPage() {
             <div className="flex items-center gap-3">
               <span className="text-xs bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Tahap 4 Terkunci</span>
+                <span>Tahap 5 Terkunci</span>
               </span>
               <a
                 href="https://wa.me/6282244109503"
@@ -482,7 +491,7 @@ export default function PsychologyTestPage() {
               <div className="space-y-2 max-w-xl mx-auto">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
                   <Lock className="w-3.5 h-3.5" />
-                  Tahap 4 Terkunci: Prasyarat Biodata Diri
+                  Tahap 5 Terkunci: Prasyarat Biodata Diri
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                   Lengkapi Formulir Biodata Diri Terlebih Dahulu
@@ -519,7 +528,13 @@ export default function PsychologyTestPage() {
                   <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
                     <Lock className="w-3 h-3" />
                   </span>
-                  <span className="text-slate-500 font-medium">Tahap 4: Psikotes Online (Terkunci)</span>
+                  <span className="text-slate-500 font-medium">Tahap 4: Wawancara Online AI (Terkunci)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 5: Psikotes Online (Terkunci)</span>
                 </div>
               </div>
 
@@ -568,7 +583,7 @@ export default function PsychologyTestPage() {
             <div className="flex items-center gap-3">
               <span className="text-xs bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Tahap 4 Terkunci</span>
+                <span>Tahap 5 Terkunci</span>
               </span>
               <a
                 href="https://wa.me/6282244109503"
@@ -591,13 +606,13 @@ export default function PsychologyTestPage() {
               <div className="space-y-2 max-w-xl mx-auto">
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
                   <Lock className="w-3.5 h-3.5" />
-                  Tahap 4 Terkunci: Prasyarat Berkas Belum Lengkap
+                  Tahap 5 Terkunci: Prasyarat Berkas Belum Lengkap
                 </span>
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
                   Unggah Seluruh Berkas & Dokumen CV Terlebih Dahulu
                 </h1>
                 <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Anda baru mengunggah <strong>{uploadedRequiredCount} dari {requiredDocs.length || 5} berkas wajib</strong> (CV, KTP, Ijazah, Pas Foto, SKCK). Sesuai alur resmi rekrutmen CV. Asia Plastik, seluruh berkas wajib harus diunggah di <strong>Tahap 3</strong> sebelum Anda diizinkan mengerjakan Psikotes Online.
+                  Anda baru mengunggah <strong>{uploadedRequiredCount} dari {requiredDocs.length || 5} berkas wajib</strong> (CV, KTP, Ijazah, Pas Foto, SKCK). Sesuai alur resmi rekrutmen CV. Asia Plastik, seluruh berkas wajib harus diunggah di <strong>Tahap 3</strong> sebelum Anda diizinkan melanjutkan.
                 </p>
               </div>
 
@@ -630,7 +645,13 @@ export default function PsychologyTestPage() {
                   <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
                     <Lock className="w-3 h-3" />
                   </span>
-                  <span className="text-slate-500 font-medium">Tahap 4: Psikotes Online (Terkunci)</span>
+                  <span className="text-slate-500 font-medium">Tahap 4: Wawancara Online AI (Terkunci)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 5: Psikotes Online (Terkunci)</span>
                 </div>
               </div>
 
@@ -642,6 +663,122 @@ export default function PsychologyTestPage() {
                   <FileCheck2 className="w-4 h-4" />
                   <span>Unggah Berkas Sekarang</span>
                   <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/dashboard"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors"
+                >
+                  <span>Kembali ke Beranda</span>
+                </Link>
+              </div>
+            </div>
+          </main>
+        </div>
+      );
+    }
+
+    if (!interviewIsDone) {
+      return (
+        <div className="min-h-screen flex flex-col justify-between bg-slate-50 font-sans text-slate-800 pb-20">
+          <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={openMobileSidebar}
+                className="md:hidden p-1.5 rounded-lg text-slate-600 hover:bg-slate-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div className="flex items-center gap-2 text-xs">
+                <Link href="/dashboard" className="text-slate-400 hover:text-sky-600">
+                  Dashboard
+                </Link>
+                <span className="text-slate-300">/</span>
+                <span className="font-bold text-slate-900">Psikotes Online Pelamar</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs bg-amber-50 text-amber-800 font-semibold px-2.5 py-1 rounded-full border border-amber-200 flex items-center gap-1.5">
+                <Lock className="w-3.5 h-3.5 text-amber-600" />
+                <span>Tahap 5 Terkunci</span>
+              </span>
+              <a
+                href="https://wa.me/6282244109503"
+                target="_blank"
+                rel="noreferrer"
+                className="text-xs font-bold bg-sky-600 hover:bg-sky-700 text-white px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Bantuan HRD</span>
+              </a>
+            </div>
+          </header>
+
+          <main className="p-4 sm:p-6 lg:p-8 max-w-4xl w-full mx-auto space-y-6 my-auto">
+            <div className="bg-white rounded-3xl border border-amber-200/80 shadow-sm p-8 sm:p-12 text-center space-y-6">
+              <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
+                <Lock className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2 max-w-xl mx-auto">
+                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-800 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full uppercase tracking-wider">
+                  <Lock className="w-3.5 h-3.5" />
+                  Tahap 5 Terkunci: Prasyarat Wawancara Online AI
+                </span>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                  Selesaikan Sesi Wawancara Online AI Terlebih Dahulu
+                </h1>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                  Sesuai alur rekrutmen terbaru CV. Asia Plastik, Anda wajib menyelesaikan sesi Wawancara Online AI pada <strong>Tahap 4</strong> sebelum dapat mengakses asesmen Psikotes Terpadu ini.
+                </p>
+              </div>
+
+              {/* Stepper Status Visual */}
+              <div className="max-w-md mx-auto bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left space-y-3">
+                <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                  Alur Tahapan Rekrutmen:
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 1: Registrasi & Pilihan Posisi Lowongan</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 2: Pengisian Biodata Diri (Lengkap)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    ✓
+                  </span>
+                  <span className="text-slate-700 font-semibold">Tahap 3: Unggah Berkas & CV (Lengkap)</span>
+                </div>
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="w-6 h-6 rounded-full bg-amber-500 text-white flex items-center justify-center font-bold text-[11px] shrink-0">
+                    4
+                  </span>
+                  <span className="text-slate-900 font-bold">
+                    Tahap 4: Wawancara Online AI (Perlu Dikerjakan)
+                  </span>
+                </div>
+                <div className="flex items-center gap-3 text-xs opacity-60">
+                  <span className="w-6 h-6 rounded-full bg-slate-300 text-slate-600 flex items-center justify-center font-bold text-[11px] shrink-0">
+                    <Lock className="w-3 h-3" />
+                  </span>
+                  <span className="text-slate-500 font-medium">Tahap 5: Psikotes Online (Terkunci)</span>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                  href="/dashboard/interview"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs shadow-md shadow-sky-600/20 transition-all"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  <span>Mulai Wawancara Online AI (Tahap 4)</span>
                 </Link>
                 <Link
                   href="/dashboard"
@@ -708,7 +845,7 @@ export default function PsychologyTestPage() {
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider text-sky-700 bg-sky-50 border border-sky-200 inline-block">
-                    Tahap 4 Seleksi Resmi
+                    Tahap 5 Seleksi Resmi
                   </span>
                   <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-emerald-600" />

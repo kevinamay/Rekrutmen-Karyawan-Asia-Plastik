@@ -36,6 +36,7 @@ export default function DashboardPage() {
     updateCandidate,
     profileCompleted,
     uploadedDocs,
+    interviewCompleted,
     psychologyScore,
     psychologyPassed,
     competencyScore,
@@ -148,6 +149,14 @@ export default function DashboardPage() {
     }
   }
 
+  let interviewDone = Boolean(interviewCompleted);
+  if (typeof window !== 'undefined') {
+    const savedInterview = localStorage.getItem('asiaplastik_interview_completed');
+    if (savedInterview === 'true') {
+      interviewDone = true;
+    }
+  }
+
   const psychoDone = Boolean(psychologyScore !== null && psychologyPassed);
   const skillDone = Boolean(competencyScore !== null && competencyPassed);
 
@@ -218,6 +227,8 @@ export default function DashboardPage() {
         router.push('/dashboard/profile');
       } else if (!docsDone) {
         router.push('/dashboard/screening');
+      } else if (!interviewDone) {
+        router.push('/dashboard/interview');
       } else if (!psychoDone) {
         router.push('/dashboard/competency-test');
       } else if (!skillDone) {

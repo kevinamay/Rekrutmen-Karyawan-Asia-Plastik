@@ -8,7 +8,8 @@ export type ApplicationStageId =
   | 'offering'
   | 'ai-interview'
   | 'psychology-test'
-  | 'practical-final';
+  | 'practical-final'
+  | 'skill-test';
 
 export type StageStatus = 'pending' | 'in_progress' | 'completed' | 'passed' | 'disqualified';
 

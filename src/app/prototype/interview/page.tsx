@@ -16,7 +16,9 @@ import {
   RefreshCw,
   CheckCircle2,
   ArrowLeft,
+  Lock,
 } from 'lucide-react';
+import { useRecruitment } from '@/context/RecruitmentContext';
 
 // ==========================================
 // MOCK DATA: PERTANYAAN WAWANCARA RESMI
@@ -188,6 +190,17 @@ export default function AIInterviewPage() {
 }
 
 function FixedAIInterviewRoom() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPreviewMode = searchParams.get('mode') === 'preview';
+
+  const {
+    isProfileCompleted,
+    isDocsCompleted,
+    isInterviewUnlocked,
+    saveInterviewCompleted,
+  } = useRecruitment();
+
   // State Sesi Wawancara
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState<number>(0);
   const [isMicOn, setIsMicOn] = useState<boolean>(true);
@@ -200,13 +213,17 @@ function FixedAIInterviewRoom() {
   const activeQuestion = INTERVIEW_QUESTIONS[currentQuestionIndex];
   const totalQuestions = INTERVIEW_QUESTIONS.length;
 
+  // Strict check if interview is unlocked (can be bypassed only with ?mode=preview)
+  const isUnlocked = isPreviewMode || isInterviewUnlocked;
+
   // Timer simulasi
   useEffect(() => {
+    if (!isUnlocked) return;
     const timer = setInterval(() => {
       setElapsedSeconds((prev) => prev + 1);
     }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [isUnlocked]);
 
   const handleNextQuestion = () => {
     if (currentQuestionIndex < totalQuestions - 1) {
@@ -229,11 +246,68 @@ function FixedAIInterviewRoom() {
     setIsAiSpeaking((prev) => !prev);
   };
 
+  const handleFinishInterview = () => {
+    saveInterviewCompleted(true);
+    router.push('/dashboard/competency-test');
+  };
+
   const formatTimer = (sec: number) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
+
+  if (!isUnlocked) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6">
+        <header className="max-w-4xl mx-auto w-full flex items-center justify-between py-4">
+          <Link href="/dashboard" className="flex items-center gap-2 text-slate-500 hover:text-sky-600 text-xs font-semibold">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Kembali ke Beranda Pelamar</span>
+          </Link>
+          <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full flex items-center gap-1.5">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Tahap 4 Terkunci</span>
+          </span>
+        </header>
+
+        <main className="max-w-lg mx-auto w-full text-center space-y-6 my-auto bg-white p-8 rounded-3xl border border-slate-200 shadow-xl">
+          <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-8 h-8" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-xl font-extrabold text-slate-900">
+              Tahap 4: Wawancara Online AI Terkunci
+            </h2>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Untuk mengakses ruang wawancara online AI ini, Anda harus menyelesaikan{' '}
+              <strong className="text-slate-800">Tahap 2 (Biodata Diri)</strong> dan mengunggah seluruh dokumen persyaratan wajib di{' '}
+              <strong className="text-slate-800">Tahap 3 (Berkas & CV)</strong> terlebih dahulu.
+            </p>
+          </div>
+
+          <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <Link
+              href="/dashboard/profile"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold transition-colors"
+            >
+              Cek Biodata Diri (Tahap 2)
+            </Link>
+            <Link
+              href="/dashboard/screening"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-md shadow-sky-600/20 transition-colors"
+            >
+              Lengkapi Berkas & CV (Tahap 3) →
+            </Link>
+          </div>
+        </main>
+
+        <footer className="text-center text-xs text-slate-400 py-4">
+          Sistem Rekrutmen Resmi CV. Asia Plastik
+        </footer>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen w-screen flex flex-col justify-between overflow-hidden bg-[#fafafa] font-sans selection:bg-sky-500 selection:text-white">
@@ -414,13 +488,13 @@ function FixedAIInterviewRoom() {
               ← Soal Sebelumnya
             </button>
             {currentQuestionIndex === totalQuestions - 1 ? (
-              <Link
-                href="/dashboard/status"
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center justify-center gap-1.5"
+              <button
+                onClick={handleFinishInterview}
+                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Selesaikan Wawancara</span>
+                <span>Selesaikan & Lanjut ke Tahap 5 (Psikotes)</span>
                 <CheckCircle2 className="w-3.5 h-3.5" />
-              </Link>
+              </button>
             ) : (
               <button
                 onClick={handleNextQuestion}
