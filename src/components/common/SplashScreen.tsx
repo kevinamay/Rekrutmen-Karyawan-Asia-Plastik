@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { Sparkles } from 'lucide-react';
 
 interface SplashScreenProps {
   /**
@@ -79,7 +78,7 @@ export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
         {/* Central Soft Neo Container */}
         <div className="z-10 flex flex-col items-center text-center space-y-6 my-auto animate-in fade-in zoom-in-95 duration-700">
           {/* Card Neo Glassmorphism */}
-          <div className="relative p-7 sm:p-9 rounded-3xl bg-white/90 backdrop-blur-md shadow-xl shadow-sky-900/5 border border-white flex flex-col items-center gap-4 transition-transform duration-500 hover:scale-[1.02]">
+          <div className="relative p-7 sm:p-9 rounded-3xl bg-white/90 backdrop-blur-md shadow-xl shadow-sky-900/5 border border-white flex flex-col items-center transition-transform duration-500 hover:scale-[1.02]">
             <Image
               src="/assets/images/logos/logo.webp"
               alt="Logo Resmi CV. Asia Plastik"
@@ -88,11 +87,6 @@ export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
               priority
               className="h-12 sm:h-14 w-auto object-contain drop-shadow-xs"
             />
-
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-sky-50 text-sky-800 border border-sky-100 text-[10px] font-bold tracking-wider uppercase">
-              <Sparkles className="w-3 h-3 text-sky-600" />
-              <span>Official Recruitment Portal</span>
-            </div>
           </div>
 
           {/* Circular Smooth Progress Indicator */}
