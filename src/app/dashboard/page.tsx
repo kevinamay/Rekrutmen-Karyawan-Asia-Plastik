@@ -82,7 +82,7 @@ export default function DashboardPage() {
             updateCandidate({ appliedRole: '', appliedDepartment: '' });
           }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
   }, [updateCandidate]);
 
@@ -252,23 +252,23 @@ export default function DashboardPage() {
                 {!profileDone
                   ? 'Lengkapi Biodata Diri Resmi Anda'
                   : !docsDone
-                  ? 'Unggah Berkas Persyaratan Pelamar'
-                  : !psychoDone
-                  ? 'Kerjakan Psikotes & Asesmen Potensi Kerja'
-                  : !skillDone
-                  ? 'Kerjakan Ujian Kompetensi Keahlian Teknis'
-                  : 'Pantau Jadwal Wawancara Tatap Muka'}
+                    ? 'Unggah Berkas Persyaratan Pelamar'
+                    : !psychoDone
+                      ? 'Kerjakan Psikotes & Asesmen Potensi Kerja'
+                      : !skillDone
+                        ? 'Kerjakan Ujian Kompetensi Keahlian Teknis'
+                        : 'Pantau Jadwal Wawancara Tatap Muka'}
               </h2>
               <p className="text-xs text-sky-100 max-w-xl">
                 {!profileDone
                   ? 'Pemeriksaan berkas tahap berikutnya akan dimulai setelah formulir biodata diri terisi lengkap.'
                   : !docsDone
-                  ? `Tersimpan ${uploadedRequiredCount} dari ${requiredDocs.length || 5} berkas wajib. Lengkapi seluruh berkas wajib untuk membuka akses psikotes online.`
-                  : !psychoDone
-                  ? 'Asesmen psikometrik online 5 subtes (Kognitif, Kepribadian, SJT, Kraepelin Digital, dan Flowchart Algoritma) dengan batas kelulusan minimal 75%.'
-                  : !skillDone
-                  ? 'Ujian teknis online berdurasi 30 menit mengenai parameter kompetensi kendali mutu industri plastik.'
-                  : 'Undangan resmi wawancara tatap muka telah diterbitkan bersama Tim Manajemen Pabrik Sidoarjo.'}
+                    ? `Tersimpan ${uploadedRequiredCount} dari ${requiredDocs.length || 5} berkas wajib. Lengkapi seluruh berkas wajib untuk membuka akses psikotes online.`
+                    : !psychoDone
+                      ? 'Asesmen psikometrik online 5 subtes (Kognitif, Kepribadian, SJT, Kraepelin Digital, dan Flowchart Algoritma) dengan batas kelulusan minimal 75%.'
+                      : !skillDone
+                        ? 'Ujian teknis online berdurasi 30 menit mengenai parameter kompetensi kendali mutu industri plastik.'
+                        : 'Undangan resmi wawancara tatap muka telah diterbitkan bersama Tim Manajemen Pabrik Sidoarjo.'}
               </p>
             </div>
             <Link
@@ -276,12 +276,12 @@ export default function DashboardPage() {
                 !profileDone
                   ? '/dashboard/profile'
                   : !docsDone
-                  ? '/dashboard/screening'
-                  : !psychoDone
-                  ? '/dashboard/competency-test'
-                  : !skillDone
-                  ? '/dashboard/skill-test'
-                  : '/dashboard/status'
+                    ? '/dashboard/screening'
+                    : !psychoDone
+                      ? '/dashboard/competency-test'
+                      : !skillDone
+                        ? '/dashboard/skill-test'
+                        : '/dashboard/status'
               }
               className="px-4 py-2.5 rounded-xl bg-white text-sky-700 font-bold text-xs hover:bg-sky-50 shrink-0 self-start sm:self-center transition-all hover:scale-[1.02] shadow-sm flex items-center gap-1.5"
             >
@@ -339,11 +339,10 @@ export default function DashboardPage() {
                   <button
                     key={cat}
                     onClick={() => setSelectedCategory(cat)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${
-                      isActive
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold shrink-0 transition-all ${isActive
                         ? 'bg-sky-600 text-white shadow-sm'
                         : 'bg-slate-50 hover:bg-sky-50 text-slate-700 border border-slate-200/80 hover:border-sky-200'
-                    }`}
+                      }`}
                   >
                     {cat}
                   </button>
@@ -361,9 +360,8 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={job.id}
-                    className={`bg-white rounded-2xl border p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group ${
-                      isSelected ? 'border-sky-400 ring-2 ring-sky-100' : 'border-slate-200 hover:border-sky-300'
-                    }`}
+                    className={`bg-white rounded-2xl border p-5 sm:p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between group ${isSelected ? 'border-sky-400 ring-2 ring-sky-100' : 'border-slate-200 hover:border-sky-300'
+                      }`}
                   >
                     <div>
                       {/* Badges row */}
@@ -423,11 +421,10 @@ export default function DashboardPage() {
                         type="button"
                         onClick={() => handleApplyJob(job)}
                         disabled={applyingJobId === job.id}
-                        className={`flex-1 text-center py-2 px-3 rounded-xl text-white text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1 ${
-                          isSelected
+                        className={`flex-1 text-center py-2 px-3 rounded-xl text-white text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1 ${isSelected
                             ? 'bg-emerald-600 hover:bg-emerald-700'
                             : 'bg-sky-600 hover:bg-sky-700'
-                        }`}
+                          }`}
                       >
                         {applyingJobId === job.id ? (
                           <span>Memproses...</span>

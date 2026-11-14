@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { RecruitmentProvider } from "@/context/RecruitmentContext";
+import { SplashScreen } from "@/components/common/SplashScreen";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -30,6 +31,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} min-h-full font-sans antialiased text-slate-800 bg-white`}
       >
+        <SplashScreen />
         <RecruitmentProvider>{children}</RecruitmentProvider>
       </body>
     </html>
