@@ -19,7 +19,12 @@ import {
 } from 'lucide-react';
 import { useRecruitment } from '@/context/RecruitmentContext';
 import { auth, db } from '@/lib/firebase';
-import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  GoogleAuthProvider,
+  signInWithPopup,
+} from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function LoginPage() {
@@ -32,6 +37,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
@@ -134,6 +140,94 @@ export default function LoginPage() {
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setErrorMessage('');
+    setIsGoogleLoading(true);
+
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Fetch atau inisialisasi data kandidat di Firestore
+      try {
+        const candidateRef = doc(db, 'candidates', user.uid);
+        const fetchDoc = getDoc(candidateRef);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Firestore read timeout')), 4000)
+        );
+        const candidateDoc = (await Promise.race([fetchDoc, timeoutPromise])) as any;
+
+        if (candidateDoc && candidateDoc.exists()) {
+          const data = candidateDoc.data();
+          updateCandidate({
+            fullName: data.fullName || user.displayName || '',
+            email: data.email || user.email || '',
+            phone: data.phone || user.phoneNumber || '',
+          });
+        } else {
+          // Buat record profil kandidat baru jika pertama kali masuk dengan akun Google
+          const newCandidate = {
+            uid: user.uid,
+            fullName: user.displayName || 'Kandidat Asia Plastik',
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+            photoURL: user.photoURL || '',
+            role: 'candidate',
+            applicationStatus: 'registered',
+            authProvider: 'google',
+            createdAt: serverTimestamp(),
+            lastLoginAt: serverTimestamp(),
+          };
+          try {
+            await setDoc(candidateRef, newCandidate, { merge: true });
+          } catch (writeErr) {
+            console.warn('Could not persist new Google candidate to Firestore:', writeErr);
+          }
+          updateCandidate({
+            fullName: newCandidate.fullName,
+            email: newCandidate.email,
+            phone: newCandidate.phone,
+          });
+        }
+      } catch (docErr) {
+        console.warn('Firestore sync warning during Google sign-in:', docErr);
+        if (user.displayName || user.email) {
+          updateCandidate({
+            fullName: user.displayName || '',
+            email: user.email || '',
+            phone: user.phoneNumber || '',
+          });
+        }
+      }
+
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error('Firebase Google sign-in error:', err);
+      if (
+        err.code === 'auth/popup-closed-by-user' ||
+        err.code === 'auth/cancelled-popup-request'
+      ) {
+        // Pengguna menutup jendela popup secara mandiri
+        return;
+      }
+      let msg = 'Gagal masuk dengan Google. Silakan coba kembali.';
+      if (err.code === 'auth/popup-blocked') {
+        msg = 'Jendela popup Google terblokir oleh browser. Harap izinkan popup di browser Anda.';
+      } else if (err.code === 'auth/account-exists-with-different-credential') {
+        msg = 'Akun dengan email ini sudah terdaftar dengan metode sandi. Silakan masuk menggunakan email & password.';
+      } else if (err.code === 'auth/network-request-failed') {
+        msg = 'Gagal terhubung ke jaringan. Periksa koneksi internet Anda.';
+      } else if (err.code === 'auth/operation-not-allowed') {
+        msg = 'Login dengan Google belum diaktifkan di Firebase Console. Harap aktifkan Google Provider.';
+      }
+      setErrorMessage(msg);
+    } finally {
+      setIsGoogleLoading(false);
     }
   };
 
@@ -286,7 +380,7 @@ export default function LoginPage() {
 
           <Button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isGoogleLoading}
             className="w-full h-11 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-bold text-sm shadow-md shadow-sky-600/20 transition-all mt-2"
           >
             {isLoading ? (
@@ -302,6 +396,34 @@ export default function LoginPage() {
             )}
           </Button>
         </form>
+
+        {/* Divider OR - Sesuai Referensi Gambar 1 */}
+        <div className="relative my-6 flex items-center justify-center">
+          <div className="w-full border-t border-slate-200/90" />
+          <span className="absolute px-3.5 py-0.5 text-[11px] font-bold text-slate-400 tracking-wider uppercase bg-[#F0F7FF] rounded-full select-none">
+            OR
+          </span>
+        </div>
+
+        {/* Tombol Masuk dengan Google - Sesuai Referensi Gambar 1 */}
+        <button
+          type="button"
+          onClick={handleGoogleSignIn}
+          disabled={isGoogleLoading || isLoading}
+          className="w-full h-11 sm:h-12 rounded-full border border-slate-200/90 bg-white hover:bg-slate-50/90 text-slate-700 font-semibold text-sm flex items-center justify-center gap-3 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {isGoogleLoading ? (
+            <span className="flex items-center gap-2 text-slate-500 text-xs">
+              <div className="w-4 h-4 border-2 border-slate-300 border-t-sky-600 rounded-full animate-spin" />
+              Menghubungkan akun Google...
+            </span>
+          ) : (
+            <span className="flex items-center justify-center gap-2.5">
+              <GoogleIcon className="w-4.5 h-4.5 sm:w-5 sm:h-5 shrink-0" />
+              <span>Masuk dengan Google</span>
+            </span>
+          )}
+        </button>
       </main>
 
       {/* Footer */}
@@ -382,5 +504,28 @@ export default function LoginPage() {
         )}
       </Modal>
     </div>
+  );
+}
+
+function GoogleIcon({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.14-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+      />
+    </svg>
   );
 }
