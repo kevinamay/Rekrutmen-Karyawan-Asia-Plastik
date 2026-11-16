@@ -337,7 +337,7 @@ export default function VerifyOtpPage() {
           )}
 
           {/* Glassmorphic 6 Box Inputs */}
-          <div className="flex justify-center gap-2 sm:gap-3 py-1">
+          <div className="flex justify-center gap-1.5 sm:gap-3 py-1">
             {otp.map((digit, idx) => (
               <input
                 key={idx}
@@ -348,7 +348,7 @@ export default function VerifyOtpPage() {
                 value={digit}
                 onChange={(e) => handleDigitChange(idx, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(idx, e)}
-                className="w-11 h-13 sm:w-12 sm:h-14 text-center text-xl font-bold font-mono rounded-2xl border border-sky-200/80 bg-white/90 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-200 transition-all"
+                className="w-10 h-12 sm:w-12 sm:h-14 text-center text-lg sm:text-xl font-bold font-mono rounded-2xl border border-sky-200/80 bg-white/90 shadow-sm focus:border-sky-500 focus:ring-4 focus:ring-sky-200 transition-all"
               />
             ))}
           </div>

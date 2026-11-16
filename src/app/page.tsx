@@ -21,6 +21,7 @@ import {
   Sparkles,
   Phone,
   Mail,
+  Menu,
   X,
 } from 'lucide-react';
 import { JobOpening, JOB_VACANCIES } from '@/data/jobVacancies';
@@ -105,6 +106,7 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [activeJobModal, setActiveJobModal] = useState<JobOpening | null>(null);
   const [scrollY, setScrollY] = useState(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   React.useEffect(() => {
     let ticking = false;
@@ -188,21 +190,78 @@ export default function HomePage() {
             </a>
           </nav>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-3">
-            <Link href="/login">
-              <button className="px-4 py-2 rounded-xl text-sm font-semibold text-blue-900 hover:text-blue-700 hover:bg-blue-50 transition-colors">
+          {/* Action Buttons & Mobile Menu Trigger */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Link href="/login" className="hidden sm:inline-block">
+              <button className="px-3.5 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-blue-900 hover:text-blue-700 hover:bg-blue-50 transition-colors">
                 Masuk
               </button>
             </Link>
             <Link href="/register">
-              <button className="px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm hover:shadow transition-all flex items-center gap-1.5">
+              <button className="px-3.5 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-semibold shadow-sm hover:shadow transition-all flex items-center gap-1.5">
                 <span>Daftar Akun</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               </button>
             </Link>
+
+            {/* Hamburger Button for Mobile / Tablet */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-xl text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+              aria-label="Buka Menu Navigasi"
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white/98 backdrop-blur-md border-b border-blue-100 px-5 py-4 space-y-3 animate-in slide-in-from-top-2 duration-200 shadow-xl">
+            <nav className="flex flex-col space-y-2 text-sm font-semibold text-slate-700">
+              <a
+                href="#tentang"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1.5 hover:text-blue-600 transition-colors"
+              >
+                Tentang Perusahaan
+              </a>
+              <a
+                href="#lowongan"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1.5 text-blue-600 font-bold hover:text-blue-700 transition-colors"
+              >
+                Lowongan Kerja ({JOB_VACANCIES.length})
+              </a>
+              <a
+                href="#tahapan"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1.5 hover:text-blue-600 transition-colors"
+              >
+                Tahapan Seleksi
+              </a>
+              <a
+                href="#kontak"
+                onClick={() => setMobileMenuOpen(false)}
+                className="py-1.5 hover:text-blue-600 transition-colors"
+              >
+                Kontak Kami
+              </a>
+            </nav>
+            <div className="pt-3 border-t border-slate-100 flex items-center gap-2">
+              <Link href="/login" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                <button className="w-full py-2.5 rounded-xl text-xs font-semibold text-blue-900 bg-blue-50 hover:bg-blue-100 transition-colors text-center">
+                  Masuk Akun
+                </button>
+              </Link>
+              <Link href="/register" className="flex-1" onClick={() => setMobileMenuOpen(false)}>
+                <button className="w-full py-2.5 rounded-xl bg-blue-600 text-white text-xs font-semibold text-center shadow-xs">
+                  Daftar Baru
+                </button>
+              </Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ==========================================

@@ -310,28 +310,38 @@ function FixedAIInterviewRoom() {
   }
 
   return (
-    <div className="h-screen w-screen flex flex-col justify-between overflow-hidden bg-[#fafafa] font-sans selection:bg-sky-500 selection:text-white">
+    <div className="min-h-screen lg:h-screen w-full flex flex-col justify-between overflow-x-hidden bg-[#fafafa] font-sans selection:bg-sky-500 selection:text-white">
       {/* =========================================================================
           TOP NAVBAR: IDENTITAS RESMI, STEPPER BULAT (1-5), DAN TIMER
           ========================================================================= */}
-      <header className="h-14 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-2xs">
-        <div className="flex items-center gap-3">
+      <header className="h-14 bg-white border-b border-slate-200 px-3 sm:px-6 flex items-center justify-between shrink-0 shadow-2xs">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/dashboard"
+            className="p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition-colors"
+            title="Kembali ke Beranda Pelamar"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </Link>
           <Image
             src="/assets/images/logos/logo.webp"
             alt="CV. Asia Plastik"
             width={110}
             height={32}
-            className="h-6 w-auto object-contain"
+            className="h-5 sm:h-6 w-auto object-contain"
           />
-          <span className="text-slate-300">|</span>
-          <span className="text-xs font-semibold text-slate-800">
+          <span className="text-slate-300 hidden sm:inline">|</span>
+          <span className="text-xs font-semibold text-slate-800 hidden sm:inline">
             Tahap 4 Seleksi: Wawancara Kompetensi Kerja
+          </span>
+          <span className="text-xs font-semibold text-slate-800 sm:hidden">
+            Wawancara AI
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           {/* Stepper Dots (1, 2, 3, 4, 5) */}
-          <div className="flex items-center gap-1.5 mr-2">
+          <div className="flex items-center gap-1 sm:gap-1.5">
             {[1, 2, 3, 4, 5].map((num, i) => (
               <button
                 key={num}
@@ -350,20 +360,20 @@ function FixedAIInterviewRoom() {
             ))}
           </div>
 
-          <span className="font-mono text-xs text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
+          <span className="font-mono text-[11px] sm:text-xs text-slate-600 bg-slate-100 px-2 sm:px-2.5 py-1 rounded-lg shrink-0">
             {formatTimer(elapsedSeconds)}
           </span>
         </div>
       </header>
 
       {/* =========================================================================
-          KONTEN UTAMA: 2 KOLOM (STAGE VIDEO KIRI + DOKUMEN TRANSKRIP KANAN)
+          KONTEN UTAMA: RESPONSIVE 2 KOLOM (STAGE VIDEO KIRI + DOKUMEN TRANSKRIP KANAN)
           ========================================================================= */}
-      <div className="flex-1 flex p-4 gap-4 overflow-hidden">
+      <div className="flex-1 flex flex-col lg:flex-row p-3 sm:p-4 gap-4 overflow-y-auto lg:overflow-hidden">
         {/* -------------------------------------------------------------
             KOLOM KIRI: STAGE VIDEO PEWAWANCARA & WEBCAM PELAMAR
             ------------------------------------------------------------- */}
-        <div className="flex-[55] bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs relative">
+        <div className="w-full lg:flex-[55] bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 flex flex-col justify-between shadow-xs relative shrink-0 min-h-[340px] lg:min-h-0">
           {/* Header Kartu Kiri: Evaluasi Kompetensi */}
           <div className="flex items-center justify-between">
             <span className="text-xs font-medium text-slate-600">
@@ -430,12 +440,11 @@ function FixedAIInterviewRoom() {
         </div>
 
         {/* -------------------------------------------------------------
-            KOLOM KANAN: PERSIS SEPERTI GAMBAR PERTAMA USER
-            (Transkrip Soal #{id} | Lihat Maksud Soal + Teks Sans-Serif + Box Inti Soal)
+            KOLOM KANAN: TRANSKRIP SOAL & LEMBAR RESPON JAWABAN
             ------------------------------------------------------------- */}
-        <div className="flex-[45] bg-white rounded-2xl border border-slate-200 p-6 flex flex-col justify-between shadow-xs overflow-hidden">
+        <div className="w-full lg:flex-[45] bg-white rounded-2xl border border-slate-200 p-4 sm:p-6 flex flex-col justify-between shadow-xs overflow-hidden shrink-0">
           <div className="space-y-4 overflow-y-auto pr-1">
-            {/* Header Box: Transkrip Soal #{id} (Bold Sans-Serif) & Lihat Maksud Soal (Amber Link) */}
+            {/* Header Box: Transkrip Soal #{id} & Lihat Maksud Soal */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="font-bold text-sm text-slate-900">
                 Transkrip Soal #{activeQuestion.id}
@@ -448,12 +457,12 @@ function FixedAIInterviewRoom() {
               </button>
             </div>
 
-            {/* Teks Pertanyaan: Sans-Serif Bersih, Warna Gelap Tegas, Tanpa Italic Serif */}
+            {/* Teks Pertanyaan: Sans-Serif Bersih */}
             <p className="text-xs sm:text-sm text-slate-800 leading-relaxed font-sans font-normal">
               &ldquo;{activeQuestion.questionText}&rdquo;
             </p>
 
-            {/* Kotak Inti Soal: Border Kuning/Amber dengan Latar Lembut (Persis Gambar Pertama) */}
+            {/* Kotak Inti Soal */}
             <div className="p-3.5 rounded-xl border border-amber-300 bg-amber-50/60 text-xs leading-relaxed">
               <strong className="font-bold text-slate-900">Inti Soal:</strong>{' '}
               <span className="text-slate-800">{activeQuestion.simplifiedIntent}</span>
@@ -479,28 +488,31 @@ function FixedAIInterviewRoom() {
           </div>
 
           {/* Bilah Tombol Navigasi Bawah */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-3">
+          <div className="pt-4 mt-3 border-t border-slate-100 flex items-center justify-between gap-2.5 sm:gap-3">
             <button
               onClick={handlePrevQuestion}
               disabled={currentQuestionIndex === 0}
-              className="flex-1 py-2.5 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 transition-colors"
+              className="flex-1 py-2.5 px-2 rounded-xl text-xs font-semibold border border-slate-200 hover:bg-slate-50 text-slate-700 disabled:opacity-40 transition-colors"
             >
-              ← Soal Sebelumnya
+              <span className="hidden sm:inline">← Soal Sebelumnya</span>
+              <span className="sm:hidden">← Kembali</span>
             </button>
             {currentQuestionIndex === totalQuestions - 1 ? (
               <button
                 onClick={handleFinishInterview}
-                className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 px-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <span>Selesaikan & Lanjut ke Tahap 5 (Psikotes)</span>
+                <span className="hidden sm:inline">Selesaikan & Lanjut ke Tahap 5</span>
+                <span className="sm:hidden">Selesai & Lanjut</span>
                 <CheckCircle2 className="w-3.5 h-3.5" />
               </button>
             ) : (
               <button
                 onClick={handleNextQuestion}
-                className="flex-1 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-xs transition-colors"
+                className="flex-1 py-2.5 px-2 rounded-xl bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold shadow-xs transition-colors"
               >
-                Soal Selanjutnya →
+                <span className="hidden sm:inline">Soal Selanjutnya →</span>
+                <span className="sm:hidden">Lanjut →</span>
               </button>
             )}
           </div>
