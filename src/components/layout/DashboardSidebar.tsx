@@ -57,9 +57,12 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
   };
 
   let actuallyProfileDone = Boolean(isProfileCompleted);
+  let isInterviewDevUnlocked = false;
   if (typeof window !== 'undefined') {
     const savedProf = localStorage.getItem('asiaplastik_profile_data');
     const savedDone = localStorage.getItem('asiaplastik_profile_completed');
+    const devUnlocked = localStorage.getItem('asiaplastik_interview_dev_unlocked');
+    isInterviewDevUnlocked = devUnlocked === 'true';
     if (savedProf) {
       try {
         const parsed = JSON.parse(savedProf);
@@ -105,9 +108,9 @@ export function DashboardSidebar({ mobileOpen, onCloseMobile }: DashboardSidebar
       href: '/dashboard/interview',
       icon: Video,
       active: pathname === '/dashboard/interview',
-      locked: !(actuallyProfileDone && isDocsCompleted),
+      locked: !(actuallyProfileDone && isDocsCompleted) && !isInterviewDevUnlocked,
       completed: Boolean(isInterviewCompleted),
-      badge: !(actuallyProfileDone && isDocsCompleted)
+      badge: !(actuallyProfileDone && isDocsCompleted) && !isInterviewDevUnlocked
         ? 'Terkunci'
         : isInterviewCompleted
         ? null
