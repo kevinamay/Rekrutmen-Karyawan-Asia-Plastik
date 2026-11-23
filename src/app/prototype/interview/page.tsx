@@ -676,8 +676,9 @@ function VariantA_ExecutiveStudio(props: any) {
                 </>
               )}
               <div className="relative w-full h-full rounded-full bg-gradient-to-tr from-sky-100 via-slate-100 to-sky-50 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-                <Image src="/assets/images/Dewi-lestari.jpg" alt="Dewi Lestari" width={140} height={140} className="w-full h-full object-cover" />
-                <User className="w-12 h-12 text-sky-400 absolute" />
+                <div className="w-full h-full bg-gradient-to-tr from-sky-200 to-indigo-100 flex items-center justify-center text-sky-800 font-extrabold text-2xl select-none">
+                  DL
+                </div>
               </div>
               <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-xs bg-white border-slate-200 text-slate-700 flex items-center gap-1.5 whitespace-nowrap">
                 <span className={`w-2 h-2 rounded-full ${isAiSpeaking ? 'bg-sky-500 animate-pulse' : 'bg-emerald-500'}`} />
@@ -907,8 +908,8 @@ function VariantB_TeleprompterStage(props: any) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Asesor Pod */}
         <div className="bg-white p-4 rounded-3xl border border-slate-200 shadow-xs flex items-center gap-4">
-          <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border-2 border-sky-200 shrink-0 shadow-xs">
-            <Image src="/assets/images/Dewi-lestari.jpg" alt="Dewi" width={80} height={80} className="w-full h-full object-cover" />
+          <div className="relative w-20 h-20 rounded-2xl overflow-hidden bg-gradient-to-tr from-sky-200 to-indigo-100 border-2 border-sky-200 shrink-0 shadow-xs flex items-center justify-center text-sky-800 font-extrabold text-lg select-none">
+            DL
             {isAiSpeaking && <div className="absolute inset-0 bg-sky-500/20 animate-pulse" />}
           </div>
           <div>
@@ -1163,8 +1164,8 @@ function VariantC_ModernGridMeeting(props: any) {
               <span className={`w-2.5 h-2.5 rounded-full ${isAiSpeaking ? 'bg-sky-500 animate-ping' : 'bg-emerald-500'}`} />
             </div>
 
-            <div className="my-auto mx-auto relative w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md">
-              <Image src="/assets/images/Dewi-lestari.jpg" alt="Dewi" width={100} height={100} className="w-full h-full object-cover" />
+            <div className="my-auto mx-auto relative w-24 h-24 rounded-full overflow-hidden border-4 border-white shadow-md bg-gradient-to-tr from-sky-200 to-indigo-100 flex items-center justify-center text-sky-800 font-extrabold text-xl select-none">
+              DL
             </div>
 
             <div className="flex items-center justify-between text-[11px] text-slate-500 z-10 bg-white/90 px-3 py-1 rounded-xl">
