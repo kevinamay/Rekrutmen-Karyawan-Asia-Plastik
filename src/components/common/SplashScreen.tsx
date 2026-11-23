@@ -85,15 +85,15 @@ export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
 
         {/* Central Soft Neo Container */}
         <div className="z-10 flex flex-col items-center text-center space-y-6 my-auto animate-in fade-in zoom-in-95 duration-700">
-          {/* Card Neo Glassmorphism */}
-          <div className="relative p-7 sm:p-9 rounded-3xl bg-white/90 backdrop-blur-md shadow-xl shadow-sky-900/5 border border-white flex flex-col items-center transition-transform duration-500 hover:scale-[1.02]">
+          {/* Logo Resmi CV. Asia Plastik (Clean Borderless) */}
+          <div className="relative flex flex-col items-center transition-transform duration-500 hover:scale-[1.02]">
             <Image
               src="/assets/images/logos/logo.webp"
               alt="Logo Resmi CV. Asia Plastik"
               width={240}
               height={64}
               priority
-              className="h-12 sm:h-14 w-auto object-contain drop-shadow-xs"
+              className="h-12 sm:h-14 w-auto object-contain"
             />
           </div>
 
