@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 
 interface SplashScreenProps {
   /**
@@ -18,11 +19,18 @@ interface SplashScreenProps {
  * kartu neo-glassmorphic, dan circular progress ring.
  */
 export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
-  const [isVisible, setIsVisible] = useState(true);
+  const pathname = usePathname();
+  const isPrototype = pathname?.startsWith('/prototype');
+  const [isVisible, setIsVisible] = useState(!isPrototype);
   const [isFadingOut, setIsFadingOut] = useState(false);
   const [progress, setProgress] = useState(18);
 
   useEffect(() => {
+    if (isPrototype) {
+      setIsVisible(false);
+      return;
+    }
+
     // Kunci scroll halaman saat splash screen aktif
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -92,7 +100,7 @@ export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
           {/* Circular Smooth Progress Indicator */}
           <div className="flex items-center gap-3 bg-white/80 backdrop-blur-xs px-4 py-2 rounded-2xl border border-sky-100 shadow-2xs">
             <div className="relative w-5 h-5 flex items-center justify-center">
-              <svg className="w-5 h-5 -rotate-90" viewBox="0 0 36 36">
+              <svg className="w-5 h-5 -rotate-90" width="20" height="20" style={{ width: 20, height: 20 }} viewBox="0 0 36 36">
                 <path
                   className="text-sky-100"
                   strokeWidth="4"
