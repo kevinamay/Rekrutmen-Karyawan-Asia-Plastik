@@ -59,7 +59,7 @@ export function SplashScreen({ displayDuration = 1700 }: SplashScreenProps) {
       clearTimeout(removeTimer);
       document.body.style.overflow = originalOverflow;
     };
-  }, [displayDuration]);
+  }, [displayDuration, isPrototype]);
 
   if (!isVisible) return null;
 
